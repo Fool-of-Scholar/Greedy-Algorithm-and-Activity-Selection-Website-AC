@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Topic 5 · Activity Selection Time Complexity</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#253047;background:#f5f7fb;font-synthesis:none;--ink:#253047;--muted:#707c91;--line:#e4e9f1;--purple:#7149e8;--purple-light:#f0ecff;--mint:#19a88b;--mint-light:#e8f8f5;--coral:#e67965;--shadow:0 12px 35px #2530470c;--meta:140px}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top left,#f1eaff 0,transparent 35%),#f5f7fb;color:var(--ink);line-height:1.55}
+.lesson{width:min(1120px,calc(100% - 36px));margin:48px auto 72px}
+.eyebrow{font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--purple)}
+h1{font-size:clamp(2rem,4vw,3.1rem);letter-spacing:-.045em;line-height:1.1;margin:.45rem 0 1rem}
+.lead{font-size:1.1rem;color:#59667c;max-width:740px;margin:0 0 28px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:var(--shadow)}
+.card h2{font-size:1.1rem;margin:0 0 14px;letter-spacing:-.02em}
+.card p{color:#5c687c;margin:.5rem 0}
+.context{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center}
+.context ul{margin:.65rem 0;padding-left:1.2rem;color:#5c687c}
+.context li+li{margin-top:8px}
+.rule{background:#f4f0ff;border:1px solid #e8dfff;padding:17px 18px;border-radius:16px;color:#443276;font-weight:650}
+.rule strong{color:var(--purple)}
+.rule code{font:700 .9rem ui-monospace,SFMono-Regular,Consolas,monospace;background:#fff;padding:2px 6px;border-radius:6px;color:#5a35d6;white-space:nowrap}
+.code-card{padding:0;overflow:hidden;background:#171b2d;border-color:#171b2d;color:#f4f4fa}
+.code-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid #ffffff18;color:#c8c9d5;font-size:.82rem}
+.code-head button,.controls button,.add-button,.preset-btn{border:0;border-radius:11px;font:inherit;font-weight:750;cursor:pointer;transition:transform .16s,background .16s,color .16s}
+.code-head button{background:#ffffff18;color:#fff;padding:8px 12px}
+.code-head button:hover,.controls button:hover,.add-button:hover,.preset-btn:hover{transform:translateY(-1px)}
+button:focus-visible{outline:3px solid #7149e855;outline-offset:2px}
+.code-wrap{padding:15px 0;overflow:auto}
+pre{margin:0;font:.82rem/1.85 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}
+.code-line{display:block;padding:0 18px 0 58px;position:relative;color:#d9dcef;transition:background .2s}
+.code-line::before{content:attr(data-line);position:absolute;left:20px;color:#747b96}
+.code-line.active{background:#704ce844;box-shadow:inset 3px 0 #a992ff;color:#fff;font-weight:600}
+.kw{color:#cf9dff}.fn{color:#8ed9ff}.str{color:#b4e3a3}.comment{color:#888fa8}
+
+/* Proof steps inside card 3 */
+.proof-steps{display:grid;gap:10px;margin:12px 0}
+.proof-step{background:#f8f9fc;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:.88rem;color:#525f75}
+.proof-step strong{color:var(--ink);display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.tag{font:700 .74rem ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:999px}
+.tag.mint{background:var(--mint-light);color:#147a61}
+
+.sim{grid-column:1/-1}
+.sim-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.sim-top p{margin:0}
+.preset-bar{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.preset-label{font-size:.78rem;font-weight:700;color:var(--muted);margin-right:4px}
+.preset-btn{background:#edf0f7;color:#4d5970;padding:6px 12px;font-size:.76rem;border-radius:8px}
+.preset-btn:hover{background:#e0e4f0}
+.preset-btn.on{background:var(--purple-light);color:#6540d6;box-shadow:inset 0 0 0 1.5px #cfc2fa}
+.add-button{background:var(--purple-light);color:#6540d6;padding:10px 14px;white-space:nowrap}
+.timeline-container{position:relative;margin-top:20px}
+.axis{display:flex;justify-content:space-between;color:#8a94a6;font-size:.72rem;margin-bottom:8px;padding:0 0 0 calc(var(--meta) + 12px);user-select:none}
+.cutoff-line{position:absolute;top:24px;bottom:0;width:2px;background:#7149e8;border-right:2px dashed #9a7aef;z-index:3;transition:left .3s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.cutoff-badge{position:absolute;top:-20px;transform:translateX(-50%);background:var(--purple);color:#fff;font-size:.65rem;font-weight:800;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 2px 6px #7149e844}
+.ride-list{display:grid;gap:10px}
+.ride-row{display:grid;grid-template-columns:var(--meta) 1fr;gap:12px;align-items:center}
+.ride-meta{display:flex;align-items:center;justify-content:space-between}
+.ride-name{font-weight:750;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.delete-btn{background:transparent;border:0;color:#a0aab8;cursor:pointer;font-size:.9rem;padding:2px 6px;border-radius:4px;line-height:1}
+.delete-btn:hover{color:var(--coral);background:#fce8e4}
+.track{position:relative;height:36px;border-radius:10px;background:repeating-linear-gradient(90deg,#f2f4f8 0,#f2f4f8 calc(12.5% - 1px),#e5e9f0 calc(12.5% - 1px),#e5e9f0 12.5%);overflow:hidden}
+.bar{position:absolute;top:5px;height:26px;border-radius:8px;background:#c7cbd5;color:#50596b;font-size:.72rem;line-height:26px;text-align:center;font-weight:800;white-space:nowrap;overflow:hidden;transition:all .32s cubic-bezier(.4,0,.2,1)}
+.bar.accepted{background:#8de0c9;color:#116c58}
+.bar.current{background:#9a7aef;color:#fff;box-shadow:0 3px 12px #7149e866;animation:pulse 1.25s infinite;z-index:2}
+.bar.rejected{background:#e4e6eb;color:#9aa1b0;opacity:.65}
+.bar.pending{background:#dfe3eb;color:#727b8a}
+.legend{display:flex;gap:17px;margin-top:15px;color:#748095;font-size:.77rem;flex-wrap:wrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:#8de0c9}
+.dot.purple{background:#9a7aef}.dot.gray{background:#c7cbd5}
+.trace-info{margin-top:18px;border-radius:14px;padding:16px 18px;background:#f7f8fc;border:1px solid var(--line);min-height:78px}
+.trace-info strong{display:block;margin-bottom:4px;font-size:.95rem}
+.trace-info p{margin:0;color:#647086;font-size:.88rem}
+.trace-info .why{margin-top:6px;font-size:.8rem;color:var(--purple);font-weight:650}
+.controls{display:flex;gap:9px;margin-top:16px;align-items:center;flex-wrap:wrap}
+.controls button{background:var(--purple-light);color:#6040c7;padding:10px 16px}
+.controls button.primary{background:var(--purple);color:#fff}
+.controls button:disabled{opacity:.43;cursor:not-allowed;transform:none}
+.hint{color:#9aa3b2;font-size:.72rem;font-weight:600}
+.progress{color:#8b94a4;font-size:.82rem;margin-left:auto;align-self:center;font-weight:600}
+.ride-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.ride-chip{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;background:#f4f5f8;color:#59657a;font-size:.76rem;font-weight:600}
+.badge{border-radius:999px;padding:2px 8px;background:#e9ebf0;color:#687285;font-size:.68rem;font-weight:800}
+.badge.accepted{background:#d9f5eb;color:#148367}
+.badge.rejected{background:#fce8e4;color:#ba5d4e}
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.stat-card{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:center}
+.stat-card .val{font-size:1.25rem;font-weight:800;color:var(--purple)}
+.stat-card .lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.result{margin-top:18px;padding:14px 16px;background:var(--mint-light);border:1px solid #d6f0e8;border-radius:14px;color:#24745f;font-weight:700;font-size:.9rem}
+.modal{position:fixed;inset:0;background:#19203380;display:grid;place-items:center;padding:18px;z-index:10}
+.modal[hidden]{display:none}
+.dialog{width:min(430px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 25px 90px #10172b40}
+.dialog-head{display:flex;justify-content:space-between;align-items:center}
+.dialog h2{margin:0}
+.close{border:0;background:#f1f2f6;border-radius:9px;padding:7px 10px;cursor:pointer;font-size:1rem}
+.form-grid{display:grid;gap:13px;margin-top:19px}
+.form-grid label{font-size:.82rem;font-weight:750;color:#4d5970}
+.form-grid input{display:block;width:100%;margin-top:5px;padding:11px 12px;border:1px solid #dce1ea;border-radius:10px;font:inherit;color:var(--ink)}
+.form-grid input:focus{outline:3px solid #7149e833;border-color:var(--purple)}
+.form-error{color:#b84a42;font-size:.82rem;min-height:1.2em}
+.form-submit{background:var(--purple);color:#fff;padding:11px 15px;border-radius:10px;border:0;font-weight:750;cursor:pointer}
+@keyframes pulse{50%{filter:brightness(1.08);transform:scaleY(1.06)}}
+@media(max-width:760px){
+:root{--meta:110px}
+.layout{grid-template-columns:1fr}
+.context{grid-column:auto;grid-template-columns:1fr}
+.sim{grid-column:auto}
+.card{padding:19px}.code-card{padding:0}
+.sim-top{align-items:center}
+.progress{width:100%;margin:4px 0 0}
+.hint{display:none}
+.stats-bar{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main id="topic-5" class="lesson">
+  <div class="eyebrow">Algorithms · Time Complexity</div>
+  <h1>How Fast is Activity Selection?</h1>
+  <p class="lead">Why the Earliest-Finish-Time (EFT) greedy strategy is so fast: break the work into two simple steps, count the checks, and see why it beats testing every combination.</p>
+
+  <div class="layout">
+    <!-- 1. CONTEXT -->
+    <section class="card context" aria-labelledby="context-title">
+      <div>
+        <h2 id="context-title">⏱️ 1. Context · Why Speed Matters</h2>
+        <p>Imagine choosing the most non-overlapping activities for a day. How many steps does the computer need as the list of <strong>n</strong> activities grows?</p>
+        <ul>
+          <li><strong>The Slow Way (Brute Force · <code>O(2ⁿ)</code>):</strong> Tests every possible mix of activities. For just 30 activities, that's over <strong>1 billion</strong> checks!</li>
+          <li><strong>The Fast Way (Greedy EFT · <code>O(n log n)</code>):</strong> Sort by finish time once, then walk through the list a single time. For 30 activities, it takes only <strong>~180 steps</strong>.</li>
+        </ul>
+      </div>
+      <div class="rule">
+        The Complexity Rule: <strong>Total Time = Sorting + One Quick Pass.</strong><br><br>
+        Sorting takes <code>O(n log n)</code> and the loop takes <code>O(n)</code>, giving <code>O(n log n)</code> overall. And if the list is <em>already sorted</em>, it takes just <code>O(n)</code>!
+      </div>
+    </section>
+
+    <!-- 2. METHOD (CODE) -->
+    <section class="card code-card" aria-labelledby="code-title">
+      <div class="code-head">
+        <span id="code-title">2. Method · Cost of Each Code Step</span>
+        <button id="copy-code" type="button" aria-label="Copy Python code">Copy code</button>
+      </div>
+      <div class="code-wrap">
+        <pre aria-label="Python implementation with time complexity comments"><code id="code-block"></code></pre>
+      </div>
+    </section>
+
+    <!-- 3. EVIDENCE / PROOF -->
+    <section class="card" aria-labelledby="how-title">
+      <h2 id="how-title">🧭 3. Evidence &amp; Proof · Why <code>O(n log n)</code>?</h2>
+      <p>We can prove the time complexity by counting the work in the two parts of the code:</p>
+      <div class="proof-steps">
+        <div class="proof-step">
+          <strong><span>Step 1 · Sorting the list</span> <span class="tag">O(n log n)</span></strong>
+          Putting <code>n</code> activities in order of finish time takes about <code>n × log₂(n)</code> comparisons. (Skip this if already sorted!)
+        </div>
+        <div class="proof-step">
+          <strong><span>Step 2 · Scanning the list once</span> <span class="tag mint">O(n)</span></strong>
+          The <code>for</code> loop checks each activity <strong>only once</strong> (<code>start &gt;= last_finish</code>). It never goes backward or re-checks earlier activities, so <code>n</code> items = <code>n</code> checks.
+        </div>
+        <div class="proof-step">
+          <strong><span>Step 3 · Add them together</span> <span class="tag">O(n log n) Total</span></strong>
+          <code>O(n log n) + O(n) = O(n log n)</code> because in Big-O we keep the biggest term that grows fastest.
+        </div>
+      </div>
+      <div class="result" style="margin-top:12px">
+        Example with numbers: For <strong>1,000</strong> activities, Sorting ≈ <strong>10,000</strong> steps + Scanning = <strong>1,000</strong> checks → Only <strong>11,000</strong> total steps!
+      </div>
+    </section>
+
+    <!-- 4. INTERACTIVE SIMULATOR & EXAMPLES -->
+    <section class="card sim" aria-labelledby="sim-title">
+      <div class="sim-top">
+        <div>
+          <h2 id="sim-title">🎢 4. Interactive Examples · Count the Steps Live</h2>
+          <p>Pick an example below and click <strong>Next step</strong> to watch the algorithm sort, scan, and count every operation.</p>
+        </div>
+        <button class="add-button" id="open-form" type="button">＋ Add custom activity</button>
+      </div>
+
+      <div class="preset-bar">
+        <span class="preset-label">Examples:</span>
+        <button class="preset-btn on" data-preset="unsorted" type="button">Example 1: Unsorted List (O(n log n))</button>
+        <button class="preset-btn" data-preset="sorted" type="button">Example 2: Already Sorted (O(n) Fast Case)</button>
+        <button class="preset-btn" data-preset="trap" type="button">Example 3: Many Overlaps (Still O(n) Scan!)</button>
+      </div>
+
+      <div class="timeline-container" id="timeline">
+        <div class="axis" aria-hidden="true">
+          <span>1 PM</span><span>2 PM</span><span>3 PM</span><span>4 PM</span><span>5 PM</span><span>6 PM</span><span>7 PM</span><span>8 PM</span><span>9 PM</span>
+        </div>
+        <div id="cutoff-line" class="cutoff-line" style="display:none">
+          <div id="cutoff-badge" class="cutoff-badge">Last finish</div>
+        </div>
+        <div id="ride-list" class="ride-list" role="group" aria-label="Activity schedule timeline from 1 PM to 9 PM"></div>
+      </div>
+
+      <div class="legend" aria-label="Timeline legend">
+        <span><i class="dot purple"></i>Checking Now (1 op)</span>
+        <span><i class="dot"></i>Accepted</span>
+        <span><i class="dot gray"></i>Skipped / Upcoming</span>
+      </div>
+
+      <div id="trace-info" class="trace-info" aria-live="polite" aria-atomic="true"></div>
+
+      <div class="controls" aria-label="Simulator controls">
+        <button id="previous" type="button">← Previous</button>
+        <button id="next" class="primary" type="button">Next step →</button>
+        <button id="play" type="button">▶ Auto-play</button>
+        <button id="reset" type="button">Reset</button>
+        <span class="hint">Shortcuts: ← → R</span>
+        <span id="progress" class="progress" aria-live="polite"></span>
+      </div>
+
+      <div id="ride-chips" class="ride-chips" aria-label="Activity statuses"></div>
+
+      <div class="stats-bar">
+        <div class="stat-card"><div id="stat-sort" class="val">12 ops</div><div class="lbl">Step 1 · Sort Cost (O(n log n))</div></div>
+        <div class="stat-card"><div id="stat-scan" class="val">0 / 5</div><div class="lbl">Step 2 · Loop Checks (O(n))</div></div>
+        <div class="stat-card"><div id="stat-total" class="val">12 ops</div><div class="lbl">Total Work Done</div></div>
+      </div>
+
+      <div id="result" class="result" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<div id="ride-modal" class="modal" hidden>
+  <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="form-help">
+    <div class="dialog-head">
+      <h2 id="dialog-title">Add an activity</h2>
+      <button class="close" id="close-form" type="button" aria-label="Close dialog">✕</button>
+    </div>
+    <p id="form-help">Enter times between 1:00 PM and 9:00 PM. Finish must be after start time.</p>
+    <form id="ride-form" class="form-grid">
+      <label>Activity name<input name="name" required maxlength="40" placeholder="Skyline Flyer"></label>
+      <label>Start time<input name="start" type="time" min="13:00" max="21:00" required value="15:00"></label>
+      <label>Finish time<input name="finish" type="time" min="13:00" max="21:00" required value="16:00"></label>
+      <div id="form-error" class="form-error" role="alert"></div>
+      <button class="form-submit" type="submit">Add activity &amp; rerun</button>
+    </form>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const source = [
+    "def select_activities(activities):",
+    "    solution = []                    # Cost: O(1)",
+    "    # Step 1: Sort by finish time    # Cost: O(n log n)",
+    "    ordered = sorted(activities, key=lambda a: a['finish'])",
+    "    last_finish = float('-inf')      # Cost: O(1)",
+    "    # Step 2: Loop through list once # Cost: O(n) total",
+    "    for act in ordered:",
+    "        if act['start'] >= last_finish:  # 1 quick check: O(1)",
+    "            solution.append(act)         # Instant add:   O(1)",
+    "            last_finish = act['finish']  # Instant save:  O(1)",
+    "    return solution"
+  ];
+  const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  $('code-block').innerHTML = source.map((line, i) => {
+    const safe = escapeHtml(line)
+      .replace(/(#[^&]*$)/, '<span class="comment">$1</span>')
+      .replace(/(&quot;.*?&quot;|&#39;.*?&#39;)/g, '<span class="str">$1</span>')
+      .replace(/\b(def|for|in|if|return|lambda)\b/g, '<span class="kw">$1</span>')
+      .replace(/\b(select_activities|sorted|float)\b/g, '<span class="fn">$1</span>');
+    return `<span class="code-line" data-line="${i + 1}">${safe || ' '}</span>`;
+  }).join('');
+
+  const PRESETS = {
+    unsorted: {
+      preSorted: false,
+      items: [
+        { name: 'Mega Coaster', start: 13, finish: 17 },
+        { name: 'Water Splash', start: 13, finish: 14.5 },
+        { name: 'Haunted Manor', start: 14, finish: 16 },
+        { name: 'Ferris Wheel', start: 14.5, finish: 15.5 },
+        { name: 'Pirate Ship', start: 15.5, finish: 17 }
+      ]
+    },
+    sorted: {
+      preSorted: true,
+      items: [
+        { name: 'Haunted House', start: 13, finish: 14 },
+        { name: 'Laser Tag', start: 13.5, finish: 15 },
+        { name: 'Go Karts', start: 14, finish: 15.5 },
+        { name: '4D Theater', start: 15.5, finish: 17 },
+        { name: 'Arcade Rush', start: 17, finish: 19 }
+      ]
+    },
+    trap: {
+      preSorted: false,
+      items: [
+        { name: 'Bumper Cars', start: 13, finish: 14 },
+        { name: 'Overlap Ride A', start: 13.5, finish: 15 },
+        { name: 'Overlap Ride B', start: 13.5, finish: 16 },
+        { name: 'Overlap Ride C', start: 13.5, finish: 17 },
+        { name: 'Overlap Ride D', start: 13.5, finish: 18 },
+        { name: 'Night Parade', start: 18, finish: 19.5 }
+      ]
+    }
+  };
+
+  let isPreSorted = false;
+  let rides = [], order = [], step = -1, timer = null, uid = 0;
+
+  const load = type => {
+    isPreSorted = PRESETS[type].preSorted;
+    return PRESETS[type].items.map((r, i) => ({ ...r, id: `p-${type}-${i}` }));
+  };
+  rides = load('unsorted');
+
+  const list = $('ride-list'), info = $('trace-info'), chips = $('ride-chips');
+  const cutoffLine = $('cutoff-line'), cutoffBadge = $('cutoff-badge');
+
+  const fmt = t => {
+    let h = Math.floor(t), m = Math.round((t - h) * 60);
+    if (m === 60) { h++; m = 0; }
+    const period = h >= 12 ? 'PM' : 'AM';
+    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+  };
+
+  let decisions = [];
+  function computeDecisions() {
+    decisions = [];
+    let last = null;
+    order.forEach(r => {
+      const ok = !last || r.start >= last.finish;
+      decisions.push({ ok, blocker: ok ? null : last, prev: last });
+      if (ok) last = r;
+    });
+  }
+  const acceptedThrough = k => order.filter((_, i) => i <= k && decisions[i].ok);
+
+  function highlightLine(nums) {
+    document.querySelectorAll('.code-line').forEach(l => l.classList.remove('active'));
+    [].concat(nums).forEach(n => document.querySelector(`.code-line[data-line="${n}"]`)?.classList.add('active'));
+  }
+
+  function stopPlay() {
+    if (timer) { clearInterval(timer); timer = null; }
+    $('play').textContent = '▶ Auto-play';
+  }
+
+  function placeCutoff(last) {
+    if (!last || step < 0 || step >= order.length) { cutoffLine.style.display = 'none'; return; }
+    const track = list.querySelector('.track');
+    if (!track) return;
+    const t = track.getBoundingClientRect(), c = $('timeline').getBoundingClientRect();
+    cutoffLine.style.display = 'block';
+    cutoffLine.style.left = `${t.left - c.left + t.width * (last.finish - 13) / 8 - 1}px`;
+    cutoffBadge.textContent = `Last finish: ${fmt(last.finish)}`;
+  }
+
+  function draw() {
+    list.innerHTML = '';
+    const n = order.length;
+    const sortOps = (!n || isPreSorted) ? 0 : Math.round(n * Math.log2(n));
+    const scanOps = step < 0 ? 0 : Math.min(n, step + 1);
+    const totalOps = sortOps + scanOps;
+
+    const done = step >= n;
+    const acc = step < 0 ? [] : acceptedThrough(Math.min(step, n - 1));
+    const cur = step >= 0 && !done ? order[step] : null;
+    const dec = cur ? decisions[step] : null;
+
+    if (!rides.length) {
+      list.innerHTML = '<p style="color:#8a94a6;font-size:.9rem;margin:8px 0">No activities yet. Add a custom activity or pick an example.</p>';
+    }
+
+    order.forEach(ride => {
+      const row = document.createElement('div');
+      row.className = 'ride-row';
+      const meta = document.createElement('div');
+      meta.className = 'ride-meta';
+      const name = document.createElement('div');
+      name.className = 'ride-name';
+      name.textContent = ride.name;
+      name.title = ride.name;
+      meta.append(name);
+      if (step === -1) {
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.textContent = '✕';
+        del.title = del.ariaLabel = `Remove ${ride.name}`;
+        del.onclick = () => { rides = rides.filter(r => r.id !== ride.id); isPreSorted = false; run(); };
+        meta.append(del);
+      }
+      const track = document.createElement('div');
+      track.className = 'track';
+      const bar = document.createElement('div');
+      const idx = order.indexOf(ride);
+      let status = 'pending';
+      if (idx >= 0 && idx <= step) status = decisions[idx].ok ? 'accepted' : 'rejected';
+      bar.className = `bar ${status}${cur === ride ? ' current' : ''}`;
+      bar.style.left = `${((ride.start - 13) / 8) * 100}%`;
+      bar.style.width = `${Math.max(3, ((ride.finish - ride.start) / 8) * 100)}%`;
+      bar.textContent = `${fmt(ride.start)}–${fmt(ride.finish)}`;
+      bar.title = `${ride.name}: ${fmt(ride.start)}–${fmt(ride.finish)}`;
+      track.append(bar);
+      row.append(meta, track);
+      list.append(row);
+    });
+
+    chips.innerHTML = '';
+    order.forEach((ride, i) => {
+      const s = i > step ? 'pending' : decisions[i].ok ? 'accepted' : 'rejected';
+      const chip = document.createElement('span');
+      chip.className = 'ride-chip';
+      chip.innerHTML = `${escapeHtml(ride.name)} <span class="badge ${s}">${s === 'accepted' ? 'Accepted (1 check)' : s === 'rejected' ? 'Skipped (1 check)' : 'Up next'}</span>`;
+      chips.append(chip);
+    });
+
+    placeCutoff(dec ? dec.prev : null);
+
+    if (!n) {
+      highlightLine([]);
+      info.innerHTML = '<strong>Nothing to schedule</strong><p>Add at least one activity to start the simulation.</p>';
+    } else if (step < 0) {
+      highlightLine([1, 2, 3, 4, 5]);
+      info.innerHTML = isPreSorted
+        ? `<strong>Step 1 Done: List is Already Sorted! (0 sort ops)</strong><p>Because these ${n} activities are already ordered by finish time, we skip sorting! Click <strong>Next step</strong> to do our single <code>O(n)</code> scan.</p><p class="why">Work so far: 0 sort ops + 0 loop checks = 0 ops</p>`
+        : `<strong>Step 1 Done: Sorted ${n} Activities by Finish Time (${sortOps} sort ops)</strong><p>Sorting ${n} items takes about <code>n log₂(n) ≈ ${sortOps}</code> ops. Now click <strong>Next step</strong> to check each activity once in a single loop.</p><p class="why">Work so far: ${sortOps} sort ops + 0 loop checks = ${sortOps} ops</p>`;
+    } else if (done) {
+      highlightLine(11);
+      info.innerHTML = `<strong>All Done! Checked ${n} activities in ${n} loop steps.</strong><p>The loop looked at each activity <strong>only once</strong> (${n} checks) and selected ${acc.length} activities. Compare our <strong>${totalOps} ops</strong> with Brute Force (<code>2^${n} = ${Math.pow(2, n)}</code> combinations)!</p><p class="why">Final Count: ${sortOps} sort ops + ${n} loop checks = ${totalOps} total ops (${isPreSorted ? 'O(n)' : 'O(n log n)'})</p>`;
+    } else if (dec.ok) {
+      highlightLine([7, 8, 9, 10]);
+      info.innerHTML = `<strong>Loop Check ${step + 1} of ${n}: ${escapeHtml(cur.name)} · <span style="color:#148367">Accepted (+1 check)</span></strong><p>${dec.prev
+        ? `1 simple check: Start time (${fmt(cur.start)}) ≥ Last finish (${fmt(dec.prev.finish)}). No conflict, so we accept it!`
+        : `1 simple check: First activity in sorted order finishes earliest (${fmt(cur.finish)}), so we accept it right away!`}</p><p class="why">Work so far: ${sortOps} sort ops + ${scanOps} loop checks = ${totalOps} ops</p>`;
+    } else {
+      highlightLine([7, 8]);
+      info.innerHTML = `<strong>Loop Check ${step + 1} of ${n}: ${escapeHtml(cur.name)} · <span style="color:#ba5d4e">Skipped (+1 check)</span></strong><p>1 simple check: Start time (${fmt(cur.start)}) &lt; Last finish (${fmt(dec.blocker.finish)}). Overlaps with <strong>${escapeHtml(dec.blocker.name)}</strong>, so we skip it in 1 step and move on!</p><p class="why">Work so far: ${sortOps} sort ops + ${scanOps} loop checks = ${totalOps} ops</p>`;
+    }
+
+    $('previous').disabled = step < 0;
+    $('next').disabled = step >= n || !n;
+    $('play').disabled = $('next').disabled;
+    $('progress').textContent = !n ? '' : step < 0 ? 'Sorted & Ready' : done ? 'Completed' : `Check ${step + 1} of ${n}`;
+
+    $('stat-sort').textContent = isPreSorted ? '0 ops (Sorted!)' : `${sortOps} ops`;
+    $('stat-scan').textContent = `${scanOps} / ${n} checks`;
+    $('stat-total').textContent = `${totalOps} ops · ${isPreSorted ? 'O(n)' : 'O(n log n)'}`;
+    $('result').textContent = done
+      ? `Summary for n = ${n}: Greedy took ${totalOps} ops (${sortOps} sort + ${n} scan) vs Brute Force O(2ⁿ) = ${Math.pow(2, n)} checks. Selected: ${acc.map(r => r.name).join(' → ')}.`
+      : 'Click "Next step →" to see each O(1) check in the loop.';
+  }
+
+  function run() {
+    stopPlay();
+    order = [...rides].sort((a, b) => a.finish - b.finish || a.start - b.start || a.name.localeCompare(b.name));
+    computeDecisions();
+    step = -1;
+    draw();
+  }
+  function next() {
+    if (step + 1 > order.length || !order.length) return;
+    if (step >= order.length) return;
+    step++;
+    if (step >= order.length) stopPlay();
+    draw();
+  }
+  function prev() {
+    if (step < 0) return;
+    stopPlay();
+    step--;
+    draw();
+  }
+  function togglePlay() {
+    if (timer) { stopPlay(); return; }
+    if (step >= order.length) return;
+    $('play').textContent = '❚❚ Pause';
+    next();
+    if (step < order.length) timer = setInterval(next, 1300);
+  }
+
+  $('next').addEventListener('click', () => { stopPlay(); next(); });
+  $('previous').addEventListener('click', prev);
+  $('reset').addEventListener('click', run);
+  $('play').addEventListener('click', togglePlay);
+  window.addEventListener('resize', () => { if (step >= 0 && step < order.length) draw(); });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('ride-modal').hidden) { closeModal(); return; }
+    if (!$('ride-modal').hidden || /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowRight') { stopPlay(); next(); }
+    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'r' || e.key === 'R') run();
+  });
+
+  document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('on', b === btn));
+    rides = load(btn.dataset.preset);
+    run();
+  }));
+
+  $('copy-code').addEventListener('click', async e => {
+    const b = e.currentTarget;
+    try { await navigator.clipboard.writeText(source.join('\n')); b.textContent = 'Copied!'; }
+    catch {
+      const ta = document.createElement('textarea');
+      ta.value = source.join('\n');
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      b.textContent = 'Copied!';
+    }
+    setTimeout(() => b.textContent = 'Copy code', 1500);
+  });
+
+  const modal = $('ride-modal'), form = $('ride-form'), error = $('form-error');
+  function closeModal() { modal.hidden = true; error.textContent = ''; $('open-form').focus(); }
+  $('open-form').addEventListener('click', () => { modal.hidden = false; form.elements.name.focus(); });
+  $('close-form').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const d = new FormData(form);
+    const name = String(d.get('name')).trim();
+    const toHour = v => { const [h, m] = String(v).split(':').map(Number); return h + m / 60; };
+    const start = toHour(d.get('start')), finish = toHour(d.get('finish'));
+    if (!name || !Number.isFinite(start) || !Number.isFinite(finish) || start < 13 || finish > 21 || finish <= start) {
+      error.textContent = 'Enter a valid name and times between 1 PM and 9 PM. Finish time must be after start time.';
+      return;
+    }
+    rides.push({ id: `custom-${++uid}`, name, start, finish });
+    isPreSorted = false;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('on'));
+    form.reset();
+    run();
+    closeModal();
+  });
+
+  run();
+})();
+</script>
+</body>
+</html>

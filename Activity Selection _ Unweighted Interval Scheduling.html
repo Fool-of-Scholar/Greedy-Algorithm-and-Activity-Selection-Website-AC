@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Activity Selection / Unweighted Interval Scheduling</title>
+<style>
+:root{--bg:#0a1428;--panel:rgba(18,36,71,.78);--line:#2a4073;--text:#f4f7fb;--mut:#a9b8d4;--mint:#4fe3b5;--gray:#56657f;--bad:#f2a1a1;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--bg) radial-gradient(900px 500px at 85% -5%,#1b3a73 0,transparent 60%);color:var(--text);font:400 16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+#deck{flex:1;min-height:0;position:relative}
+.slide{position:absolute;inset:0;overflow-y:auto;padding:20px;opacity:0;visibility:hidden;transition:opacity .4s}
+.slide.on{opacity:1;visibility:visible}
+.box{max-width:960px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px 32px}
+h1{font:700 clamp(2rem,5vw,3.2rem)/1.15 Georgia,serif;margin:0 0 14px}
+h2{font:700 clamp(1.5rem,3.4vw,2.2rem)/1.2 Georgia,serif;margin:0 0 6px}
+h3{font-size:1.05rem;margin:0 0 6px;color:var(--mint)}
+.rule{width:56px;height:4px;background:var(--mint);border-radius:4px;margin:8px 0 18px}
+p{margin:0 0 12px}.mut{color:var(--mut)}
+.center{text-align:center}.center .rule{margin-inline:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card{background:rgba(7,16,34,.55);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.mint{color:var(--mint)}.bad{color:var(--bad)}
+code,pre,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#071022;border:1px solid var(--line);border-radius:10px;padding:14px;margin:0;overflow-x:auto;font-size:.88rem;line-height:1.55}
+.k{color:var(--mint)}
+ol{margin:0;padding-left:1.2em}li{margin-bottom:4px}
+.note{border-left:4px solid var(--mint);background:rgba(79,227,181,.09);padding:10px 14px;border-radius:0 10px 10px 0;margin:0 0 14px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:.9rem}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}th{color:var(--mut)}
+tr.s td:first-child{box-shadow:inset 4px 0 var(--mint)}tr.r td{color:var(--gray)}tr.r td:first-child{box-shadow:inset 4px 0 var(--gray)}tr.d td{opacity:.3}
+.tag{border-radius:6px;padding:0 8px;font-weight:600;font-size:.82rem}.tag.s{background:var(--mint);color:#04261d}.tag.r{background:#2a3855;color:var(--bad)}
+.tl{background:#071022;border:1px solid var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;margin-bottom:10px}
+.tlin{min-width:460px;position:relative}
+.row{display:grid;grid-template-columns:26px 1fr;height:30px;align-items:center}
+.track{position:relative;height:100%;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),#1c2c52 calc(10% - 1px) 10%)}
+.bar{position:absolute;top:4px;height:22px;border-radius:5px;background:#2b3a5a;border:1px dashed #3f5078;color:#7d8cab;font-size:.75rem;display:flex;align-items:center;padding:0 7px;transition:background .3s}
+.bar.s{background:var(--mint);border:1px solid var(--mint);color:#04261d;font-weight:600}.bar.r{background:#3a4458;border:1px solid #3a4458;color:#8a96ad;text-decoration:line-through}
+.ticks{display:grid;grid-template-columns:26px repeat(10,1fr);font-size:.75rem;color:var(--mut)}
+.lf{position:absolute;top:0;bottom:18px;border-left:2px dashed #fff;opacity:.6;transition:left .3s}
+button{font:inherit;font-weight:600;border:0;border-radius:9px;padding:8px 16px;cursor:pointer;background:var(--mint);color:#04261d}
+button.g{background:transparent;color:var(--mint);border:1px solid var(--mint)}button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+input{font:inherit;background:#071022;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:90px}
+form{display:flex;flex-wrap:wrap;gap:10px;align-items:end}label{display:flex;flex-direction:column;font-size:.82rem;color:var(--mut)}
+a{color:var(--mint)}
+#bar{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:#0d1c3a;border-top:1px solid var(--line)}
+#ttl{color:var(--mut);font-size:.9rem;text-align:center;flex:1}
+@media(max-width:600px){.box{padding:18px}#ttl{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="deck">
+
+<div class="slide on"><div class="box center">
+<h1>Activity Selection / Unweighted Interval Scheduling</h1><div class="rule"></div>
+<p class="mut">Algorithm Complexity</p></div></div>
+
+<div class="slide"><div class="box">
+<h2>Context</h2><div class="rule"></div>
+<p>Several activities want one shared room. Each has a <b>start</b> and a <b>finish</b> time, and two activities cannot overlap. Touching at one moment is fine: one ending at 6 and another starting at 6 are compatible.</p>
+<div class="note"><b>Goal:</b> select the maximum number of mutually compatible activities.</div>
+<div class="grid">
+<div class="card"><h3>Unweighted</h3>Every activity has equal value, so we maximize the <b>count</b>, not total profit or weight.</div>
+<div class="card"><h3>Greedy idea</h3>Take the best-looking choice now and never reconsider it.</div>
+<div class="card"><h3>Which choice?</h3>The activity that <b>finishes earliest</b> frees the room soonest, leaving the most time for later activities.</div>
+</div></div></div>
+
+<div class="slide"><div class="box">
+<h2>Method: Earliest-Finish-Time-First</h2><div class="rule"></div>
+<div class="grid">
+<div><ol>
+<li>Sort all activities by increasing finish time.</li>
+<li>Select the activity that finishes earliest.</li>
+<li>Examine the remaining activities in sorted order.</li>
+<li>Select one only if its start ≥ the finish of the last selected activity.</li>
+<li>Continue until every activity has been examined.</li></ol></div>
+<pre><span class="k">ActivitySelection</span>(activities):
+  sort activities by increasing finish time
+  selected = []
+  last_finish = -infinity
+
+  for activity in activities:
+    if activity.start &gt;= last_finish:
+      selected.append(activity)
+      last_finish = activity.finish
+
+  return selected</pre></div>
+<div class="card" style="margin-top:14px"><b>In plain terms:</b> <code>last_finish</code> is the moment the room becomes free. Each activity is tested once against it: starts in time, take it and update <code>last_finish</code>; otherwise skip it. The algorithm <b>never backtracks</b>, and the sorting happens once, before any selection.</div>
+</div></div>
+
+<div class="slide"><div class="box">
+<h2>Evidence / Proof of correctness</h2><div class="rule"></div>
+<div class="note"><b>Simple version:</b> if a best schedule starts with some other activity X, swap X for the earliest-finishing activity G. G ends no later, so nothing breaks and the schedule is just as big. Picking G first never hurts.</div>
+<p><b>Greedy-choice property:</b> a locally best first choice can always be extended to an optimal solution. Exchange argument:</p>
+<ol>
+<li>Take an optimal schedule whose first activity is X.</li>
+<li>Let G be the activity with the earliest finish time.</li>
+<li>If X ≠ G, replace X with G.</li>
+<li>Since f(G) ≤ f(X), every other activity (which starts at or after f(X)) is still compatible with G.</li>
+<li>The swap keeps the same number of activities, so the schedule is still optimal.</li>
+<li>Repeat on the remaining activities that start at or after f(G).</li></ol>
+<p class="mint" style="margin-top:12px"><b>Conclusion:</b> earliest-finish-time-first returns a maximum-size compatible schedule.</p>
+</div></div>
+
+<div class="slide"><div class="box">
+<h2>Summary and references</h2><div class="rule"></div>
+<div class="grid">
+<div class="card"><h3>Problem</h3>Choose the most mutually compatible activities for one resource.</div>
+<div class="card"><h3>Strategy</h3>Sort by finish time; take each activity that starts at or after the last finish.</div>
+<div class="card"><h3>Correctness</h3>Exchange argument: the earliest finisher can replace any optimal first choice.</div></div>
+<h3 style="margin-top:16px">References</h3>
+<ul style="margin:0;padding-left:1.2em">
+<li><a href="https://i.cs.hku.hk/~hkual/Notes/Greedy/ActivitySelectionProblem.html" target="_blank" rel="noopener">University of Hong Kong, Activity Selection Problem</a></li>
+<li><a href="https://www.math.ucla.edu/~allen/math182_lecture_notes.pdf" target="_blank" rel="noopener">UCLA Math 182 Lecture Notes</a></li></ul>
+</div></div>
+
+</div>
+<div id="bar"><button id="pv">← Previous</button><div id="ttl"></div><div class="mono mut">Slide <b id="ct" style="color:#fff">1</b> / 5</div><button id="nx">Next →</button></div>
+
+<script>
+var names=["Title","Context","Method","Evidence / Proof","Summary"],cur=0,S=document.querySelectorAll('.slide');
+function go(n){cur=Math.max(0,Math.min(S.length-1,n));S.forEach(function(s,i){s.classList.toggle('on',i===cur)});S[cur].scrollTop=0;
+ document.getElementById('ct').textContent=cur+1;document.getElementById('ttl').textContent=names[cur];
+ document.getElementById('pv').disabled=cur===0;document.getElementById('nx').disabled=cur===S.length-1}
+document.getElementById('pv').onclick=function(){go(cur-1)};document.getElementById('nx').onclick=function(){go(cur+1)};
+document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+go(0);
+
+</script>
+</body>
+</html>

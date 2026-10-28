@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slide 1: Introduction to Greedy Algorithms</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:#09090b;color:#e4e4e7;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.coin{width:58px;height:58px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#022c22;background:radial-gradient(circle at 30% 30%,#a7f3d0,#10b981 60%,#047857);box-shadow:0 0 18px rgba(16,185,129,.55),inset 0 0 0 3px rgba(255,255,255,.25);animation:drop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes drop{from{transform:translateY(-60px) scale(.4);opacity:0}to{transform:none;opacity:1}}
+.fade{animation:f .35s ease}@keyframes f{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+code,pre{font-family:ui-monospace,Menlo,Consolas,monospace}
+.k{color:#f472b6}.c{color:#71717a}.f{color:#34d399}.s{color:#fbbf24}
+/* ===== Design layer ===== */
+body{background:radial-gradient(1200px 600px at 10% -10%,rgba(16,185,129,.18),transparent 60%),radial-gradient(900px 500px at 100% 0%,rgba(20,184,166,.14),transparent 55%),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/40px 40px,#09090b;background-attachment:fixed;overflow-x:hidden}
+body::before,body::after{content:"";position:fixed;border-radius:9999px;filter:blur(90px);pointer-events:none;z-index:0;animation:float 14s ease-in-out infinite alternate}
+body::before{width:340px;height:340px;background:rgba(16,185,129,.22);left:-80px;bottom:8%}
+body::after{width:300px;height:300px;background:rgba(251,191,36,.12);right:-60px;top:35%;animation-delay:-6s}
+@keyframes float{to{transform:translate(60px,-50px) scale(1.15)}}
+main{position:relative;z-index:1}
+#bar{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:4px;width:20%;z-index:50;background:linear-gradient(90deg,#10b981,#2dd4bf,#fbbf24);box-shadow:0 0 14px rgba(16,185,129,.8);transition:width .5s ease;border-radius:0 4px 4px 0}
+::selection{background:#10b981;color:#022c22}
+::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:#065f46;border-radius:8px}
+.slide.fade{animation:sl .55s cubic-bezier(.2,.8,.2,1)}
+@keyframes sl{from{opacity:0;transform:translateY(22px) scale(.98);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.slide .bg-zinc-900{background:linear-gradient(145deg,rgba(39,39,42,.7),rgba(9,9,11,.75))!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(52,211,153,.22)!important;box-shadow:0 24px 70px -24px rgba(16,185,129,.35),inset 0 1px 0 rgba(255,255,255,.06);border-radius:1.5rem!important}
+.slide h1{background:linear-gradient(90deg,#fff 0%,#a7f3d0 45%,#2dd4bf 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important;letter-spacing:-.02em;line-height:1.05;filter:drop-shadow(0 0 28px rgba(16,185,129,.35))}
+.slide h2{display:flex;align-items:center;gap:8px}
+.slide h2::before{content:"";width:22px;height:3px;border-radius:3px;background:linear-gradient(90deg,#10b981,#2dd4bf);box-shadow:0 0 10px rgba(16,185,129,.8)}
+blockquote{position:relative;box-shadow:0 0 50px -10px rgba(251,191,36,.3);background:linear-gradient(90deg,rgba(251,191,36,.16),rgba(251,191,36,.03))!important;border-radius:0 1.25rem 1.25rem 0!important}
+blockquote::before{content:"\201C";position:absolute;top:-18px;left:12px;font-size:4rem;line-height:1;color:#fbbf24;opacity:.5;font-style:normal}
+button{transition:transform .15s,box-shadow .25s,background .2s}
+button:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 10px 22px -8px rgba(16,185,129,.6)}
+button:not(:disabled):active{transform:scale(.96)}
+button:disabled{cursor:not-allowed;opacity:.6}
+.rounded-xl.overflow-hidden{box-shadow:0 0 40px -12px rgba(52,211,153,.4)}
+.coin{position:relative;overflow:hidden;transition:transform .25s}
+.coin:hover{transform:rotateY(180deg) scale(1.1)}
+.coin::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3s infinite}
+@keyframes shine{60%,100%{transform:translateX(120%)}}
+#rem{text-shadow:0 0 30px rgba(16,185,129,.7);transition:transform .2s}
+#tray{background:radial-gradient(circle at 50% 100%,rgba(16,185,129,.1),transparent 70%)}
+input[type=number]{border:1px solid rgba(52,211,153,.25);outline:none}
+input[type=number]:focus{border-color:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.25)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="min-h-screen">
+<div id="bar"></div>
+<main class="max-w-7xl mx-auto px-4 md:px-8 py-6">
+  <header class="mb-6">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <span class="text-xs tracking-widest text-emerald-400 font-semibold">CS 05 · CHAPTER 06: GREEDY ALGORITHMS · SLIDE 01</span>
+      <div class="flex gap-2">
+        <button id="prev" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-500 text-sm" disabled>← Prev</button>
+        <button id="next" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-500 text-sm" disabled>Next →</button>
+        <button id="btn-open-quiz" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold flex items-center gap-1 shadow-md shadow-sky-600/25">🎯 Quiz (4 Items)</button>
+        <button id="full" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold">⛶ Present</button>
+      </div>
+    </div>
+  </header>
+  <section class="slide" data-s="0"><div class="min-h-[60vh] flex items-center"><h1 class="text-4xl md:text-7xl font-extrabold text-white">1. Introduction to Greedy Algorithms</h1></div></section>
+  <section class="slide hidden" data-s="1"><div class="min-h-[60vh] flex items-center">
+    <blockquote class="border-l-4 border-amber-400 bg-amber-400/10 rounded-r-xl p-6 text-xl md:text-4xl leading-snug text-amber-100 italic">
+      “Why should we commit permanently to a short-sighted narrowed choice right now instead of us calculating every possible future outcomes?”
+    </blockquote></div></section>
+
+  <section class="slide hidden" data-s="2"><div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+      <div>
+        <h2 class="text-emerald-400 font-bold text-sm uppercase tracking-wide">Context</h2>
+        <p class="mt-1 text-zinc-300">Many computational problems require finding the best configuration out of an astronomical number of possibilities (e.g., maximizing profit, minimizing latency, or packing items).</p>
+      </div>
+      <div>
+        <h2 class="text-emerald-400 font-bold text-sm uppercase tracking-wide">For Example</h2>
+        <p class="mt-1 text-zinc-300">An exhaustive <b>brute-force search</b> explores all 2<sup>n</sup> subsets or n! permutations, which becomes computationally impossible as input size <i>n</i> scales higher and higher.</p>
+        <p class="mt-2 text-zinc-300">A <b class="text-emerald-300">Greedy Algorithm</b> takes the most advantageous choice available at the immediate moment (a <b>local optimum</b>) and never backtracks or reconsiders, hoping that this sequence of local decisions leads to a <b>global optimum</b>.</p>
+      </div>
+      <div class="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-3 text-sm text-zinc-300">
+        <b class="text-emerald-300">ⓘ Beginner words:</b>
+        <b>Brute force</b> = try every option. <b>2<sup>n</sup></b> = doubles with each extra item (30 items → over 1 billion tries). <b>Local optimum</b> = best choice <i>right now</i>. <b>Global optimum</b> = best answer overall. <b>Backtrack</b> = undo a choice and try another.
+      </div>
+</div></section>
+  <section class="slide hidden" data-s="3"><div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+      <div>
+        <h2 class="text-emerald-400 font-bold text-sm uppercase tracking-wide mb-2">Algorithmic Blueprint</h2>
+        <div class="rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950">
+          <div class="flex items-center gap-1.5 px-3 py-2 bg-zinc-800">
+            <i class="w-3 h-3 rounded-full bg-red-400"></i><i class="w-3 h-3 rounded-full bg-amber-400"></i><i class="w-3 h-3 rounded-full bg-emerald-400"></i>
+            <span class="ml-2 text-xs text-zinc-400">greedy.py</span>
+          </div>
+<pre class="p-4 text-[13px] leading-6 overflow-x-auto"><span class="k">def</span> <span class="f">generic_greedy_solver</span>(candidates):
+    solution = []
+    <span class="c"># Sort or prioritize candidates based on a specific local heuristic</span>
+    ordered_candidates = <span class="f">prioritize</span>(candidates)
+
+    <span class="k">for</span> candidate <span class="k">in</span> ordered_candidates:
+        <span class="k">if</span> <span class="f">is_compatible</span>(solution, candidate):
+            solution.<span class="f">append</span>(candidate)  <span class="c"># Permanent commitment: no undo / backtracking</span>
+
+    <span class="k">return</span> solution</pre>
+        </div>
+      </div>
+    </div></section>
+
+  <section class="slide hidden" data-s="4"><div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+      <div>
+        <h2 class="text-emerald-400 font-bold text-sm uppercase tracking-wide">Interactive Sandbox · Coin Change</h2>
+        <p class="text-sm text-zinc-400">Coins available: <b class="text-white">₱20, ₱10, ₱5, ₱1</b>. Make the target using the fewest coins.</p>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center" id="presets"></div>
+      <div class="flex items-center gap-3">
+        <input id="slider" type="range" min="1" max="99" value="36" class="flex-1 accent-emerald-500">
+        <input id="num" type="number" min="1" max="99" value="36" class="w-20 bg-zinc-800 rounded-lg px-2 py-1 text-center">
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="step" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm">▶ Run Greedy Step-by-Step</button>
+        <button id="auto" class="px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white font-semibold text-sm">⏵⏵ Auto-Play</button>
+        <button id="reset" class="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white font-semibold text-sm">↺ Reset</button>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950 border border-zinc-800 p-4 text-center">
+        <div class="text-xs uppercase tracking-widest text-zinc-500">Current Balance / Remaining</div>
+        <div class="text-5xl font-black text-emerald-400 tabular-nums" id="rem">₱36</div>
+      </div>
+
+      <div>
+        <div class="text-xs uppercase tracking-widest text-zinc-500 mb-1">⌘ Step-by-Step Log</div>
+        <ol id="log" class="space-y-1 text-sm min-h-[96px]"><li class="text-zinc-500">Press “Run Greedy Step-by-Step” to begin.</li></ol>
+      </div>
+
+      <div>
+        <div class="text-xs uppercase tracking-widest text-zinc-500 mb-1">Selected Solution Tray · <span id="cnt">0</span> coins</div>
+        <div id="tray" class="min-h-[84px] rounded-xl border-2 border-dashed border-emerald-500/30 p-3 flex flex-wrap gap-2 items-center"></div>
+      </div>
+
+      <div class="rounded-xl border border-zinc-700 p-4 space-y-3">
+        <h3 class="font-bold text-white">Why Greedy Wins</h3>
+        <div class="grid sm:grid-cols-2 gap-3 text-sm">
+          <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3">
+            <div class="text-emerald-300 font-semibold">✔ Greedy Choice</div>
+            <div id="gtxt" class="mt-1"></div>
+            <div class="text-xs text-emerald-400 mt-1">Optimal minimum</div>
+          </div>
+          <div class="rounded-lg bg-amber-400/10 border border-amber-400/30 p-3">
+            <div class="text-amber-300 font-semibold">⚠ Non-Greedy Alternative</div>
+            <div id="atxt" class="mt-1"></div>
+            <div class="text-xs text-amber-300 mt-1">Always same or worse</div>
+          </div>
+        </div>
+        <p class="text-sm text-zinc-300">Replacing one 20-coin requires at least two 10-coins; replacing one 5-coin requires five 1-coins. Each greedy choice minimizes total coin count.</p>
+        <p class="text-xs text-zinc-500">Note: this works because ₱20, ₱10, ₱5, ₱1 each divide neatly into the next bigger coin. With odd coins (like 1, 3, 4) greedy can fail, which later slides explore.</p>
+
+        <div class="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between flex-wrap gap-3 bg-zinc-950/60 p-4 rounded-xl border border-emerald-500/30">
+          <div>
+            <div class="text-sm font-bold text-white flex items-center gap-2">
+              <span class="text-base">🎯</span>
+              <span>Topic 1 Knowledge Check: Interactive Quiz</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">4 Items</span>
+            </div>
+            <div class="text-xs text-zinc-400 mt-0.5">2x 4-Pics identification challenges + 2x Matrix Red vs Blue Pill dilemmas.</div>
+          </div>
+          <button id="btn-launch-quiz-bottom" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 hover:from-emerald-400 hover:to-sky-400 text-zinc-950 font-black text-xs shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95">
+            Launch Topic 1 Quiz →
+          </button>
+        </div>
+      </div>
+    </div></section>
+</main>
+
+<script>
+const COINS=[20,10,5,1];
+let target=36,rem=36,picked=[],timer=null;
+const $=id=>document.getElementById(id);
+function greedy(t,coins){const r=[];for(const c of coins){while(t>=c){r.push(c);t-=c}}return r}
+function render(){
+  $('rem').textContent='₱'+rem;
+  $('cnt').textContent=picked.length;
+  $('tray').innerHTML=picked.map(c=>'<div class="coin">₱'+c+'</div>').join('')||'<span class="text-zinc-600 text-sm">Empty: coins will drop here</span>';
+  let t=target;
+  $('log').innerHTML=picked.length?picked.map((c,i)=>{const b=t;t-=c;return '<li class="fade">Step '+(i+1)+': Target ₱'+b+' → Largest coin ≤ '+b+' is <b class="text-emerald-300">'+c+'</b>. Remaining: <b>'+t+'</b></li>'}).join(''):'<li class="text-zinc-500">Press “Run Greedy Step-by-Step” to begin.</li>';
+  if(rem===0)$('log').innerHTML+='<li class="text-emerald-400 font-semibold fade">✔ Done in '+picked.length+' coins.</li>';
+  const g=greedy(target,COINS);
+  $('gtxt').innerHTML='{'+g.join(', ')+'} = <b>'+g.length+' coins</b>';
+  let alt=greedy(target,[10,5,1]);
+  if(alt.length===g.length)alt=greedy(target,[5,1]);
+  if(alt.length===g.length)alt=greedy(target,[1]);
+  let extra=target===36?'<div class="text-xs text-zinc-400 mt-1">Also: 20+5+5+5+1 = 5 coins… or 10+5×5+1 = 7 coins</div>':'';
+  $('atxt').innerHTML=alt.length===g.length?'None: ₱'+target+' needs just '+g.length+' coin(s) anyway.':'{'+alt.join(', ')+'} = <b>'+alt.length+' coins</b>'+extra;
+}
+function stepOnce(){
+  if(rem<=0){stop();return false}
+  const c=COINS.find(x=>x<=rem);picked.push(c);rem-=c;render();
+  if(rem<=0)stop();return true;
+}
+function stop(){clearInterval(timer);timer=null;$('auto').textContent='⏵⏵ Auto-Play'}
+function reset(){stop();rem=target;picked=[];render()}
+function setTarget(v){v=Math.max(1,Math.min(99,parseInt(v)||1));target=v;$('slider').value=v;$('num').value=v;reset();hl()}
+function hl(){document.querySelectorAll('#presets button').forEach(b=>{const on=+b.dataset.v===target;b.className='px-3 py-1.5 rounded-lg text-sm font-semibold '+(on?'bg-emerald-500 text-zinc-950':'bg-zinc-800 hover:bg-zinc-700')})}
+[36,28,43,67].forEach(v=>{const b=document.createElement('button');b.textContent=v;b.dataset.v=v;b.onclick=()=>setTarget(v);$('presets').appendChild(b)});
+$('slider').oninput=e=>setTarget(e.target.value);
+$('num').onchange=e=>setTarget(e.target.value);
+$('step').onclick=()=>{stop();if(rem<=0)reset();stepOnce()};
+$('auto').onclick=()=>{if(timer){stop();return}if(rem<=0)reset();$('auto').textContent='⏸ Pause';timer=setInterval(stepOnce,900)};
+$('reset').onclick=reset;
+$('full').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){}};
+let cur=0;const N=5;
+function go(i){cur=Math.max(0,Math.min(N-1,i));document.querySelectorAll('.slide').forEach(s=>{const on=+s.dataset.s===cur;s.classList.toggle('hidden',!on);if(on)s.classList.add('fade')});
+  const p=$('prev'),n=$('next');p.disabled=cur===0;n.disabled=cur===N-1;
+  p.className='px-3 py-1.5 rounded-lg text-sm '+(p.disabled?'bg-zinc-800 text-zinc-500':'bg-zinc-700 hover:bg-zinc-600 text-white');
+  n.className='px-3 py-1.5 rounded-lg text-sm '+(n.disabled?'bg-zinc-800 text-zinc-500':'bg-zinc-700 hover:bg-zinc-600 text-white');
+  $('bar').style.width=((cur+1)/N*100)+'%';n.textContent='Next ('+(cur+1)+'/'+N+') →'}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&cur<4)){e.preventDefault();go(cur+1)}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  else if(e.key===' '&&cur===4){e.preventDefault();$('step').click()}
+  else if(e.key==='r'&&cur===4)reset()});
+go(0);
+setTarget(36);
+
+function openQuiz(){
+  if(window.parent && window.parent !== window){
+    window.parent.postMessage({type:'GOTO_TOPIC',file:'quiz-1.html'},'*');
+  } else {
+    window.location.href = 'quiz-1.html';
+  }
+}
+if($('btn-open-quiz')) $('btn-open-quiz').onclick = openQuiz;
+if($('btn-launch-quiz-bottom')) $('btn-launch-quiz-bottom').onclick = openQuiz;
+</script>
+</body>
+</html>

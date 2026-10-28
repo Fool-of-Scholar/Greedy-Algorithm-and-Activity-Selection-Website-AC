@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>Why Earliest Finish Works</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5d687b;
+      --line: #dce3ed;
+      --paper: #ffffff;
+      --page: #f2f5fa;
+      --accent: #315ee8;
+      --accent-soft: #eaf0ff;
+      --code: #101827;
+      --good: #16794a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .hero {
+      padding: clamp(2rem, 6vw, 4.5rem) 1rem 2.5rem;
+      background: linear-gradient(135deg, #101827, #203a70);
+      color: white;
+    }
+    .hero-inner, main, footer { width: min(100% - 2rem, 1000px); margin-inline: auto; }
+    .eyebrow {
+      display: inline-block; margin: 0 0 .75rem; padding: .25rem .65rem;
+      border: 1px solid #8198d7; border-radius: 999px; color: #d9e4ff;
+      font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    }
+    h1 { max-width: 780px; margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1.12; letter-spacing: -.035em; }
+    .hero p { max-width: 720px; margin: 1rem 0 0; color: #e0e8fa; font-size: clamp(1rem, 2.4vw, 1.15rem); }
+    main { padding-block: 1.5rem 3rem; }
+    section {
+      margin: 1.2rem 0; padding: clamp(1rem, 3vw, 1.6rem);
+      background: var(--paper); border: 1px solid var(--line); border-radius: 18px;
+      box-shadow: 0 8px 24px rgb(21 35 62 / 5%);
+    }
+    h2 { margin: 0 0 .7rem; font-size: clamp(1.25rem, 3vw, 1.65rem); line-height: 1.25; }
+    h3 { margin: 1.25rem 0 .4rem; font-size: 1.05rem; }
+    p { margin: .5rem 0; }
+    .muted { color: var(--muted); }
+    .steps { padding-left: 1.25rem; margin-bottom: 0; }
+    .steps li { padding-left: .25rem; margin: .35rem 0; }
+    .code-head {
+      display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+      flex-wrap: wrap; margin-bottom: .65rem;
+    }
+    .code-head h3 { margin: 0; }
+    button {
+      border: 0; border-radius: 9px; padding: .6rem .85rem; cursor: pointer;
+      background: var(--accent); color: white; font: inherit; font-weight: 650;
+    }
+    button:hover { filter: brightness(1.08); }
+    button:focus-visible { outline: 3px solid #91a9ff; outline-offset: 3px; }
+    pre {
+      margin: 0; padding: 1rem; overflow-x: auto; border-radius: 12px;
+      background: var(--code); color: #eaf0ff; font: .9rem/1.65 ui-monospace, SFMono-Regular, Consolas, monospace;
+      tab-size: 4; -webkit-overflow-scrolling: touch;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .output { margin-top: .75rem; background: #f6f8fc; color: #1d2a40; border: 1px solid var(--line); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; min-width: 360px; }
+    th, td { padding: .7rem .85rem; text-align: left; border-bottom: 1px solid var(--line); }
+    th { background: #f5f7fb; font-size: .9rem; }
+    tr:last-child td { border-bottom: 0; }
+    .picked { color: var(--good); font-weight: 750; }
+    .proof-list { list-style: none; padding: 0; margin: .8rem 0 0; counter-reset: proof; }
+    .proof-list li {
+      position: relative; padding: .7rem .75rem .7rem 3rem; margin: .55rem 0;
+      border: 1px solid var(--line); border-radius: 12px; counter-increment: proof;
+    }
+    .proof-list li::before {
+      content: counter(proof); position: absolute; left: .75rem; top: .7rem;
+      display: grid; place-items: center; width: 1.55rem; height: 1.55rem;
+      border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800;
+    }
+    .callout { padding: .9rem 1rem; background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 8px; }
+    .complexity { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; }
+    .metric { padding: .85rem; background: #f6f8fc; border: 1px solid var(--line); border-radius: 12px; }
+    .metric strong { display: block; font-size: 1.15rem; }
+    footer { padding: 0 0 2rem; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 520px) {
+      .hero-inner, main, footer { width: min(100% - 1rem, 1000px); }
+      .hero { padding-top: 2.2rem; }
+      section { border-radius: 13px; padding: 1rem; }
+      pre { font-size: .8rem; padding: .8rem; }
+      .complexity { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Greedy algorithm · Python</p>
+      <h1>Why Earliest Finish Works</h1>
+      <p>Understand the Activity Selection Problem, see the Python code, and learn why choosing the activity that finishes first leads to an optimal result.</p>
+    </div>
+  </header>
+
+  <main>
+    <section aria-labelledby="context">
+      <h2 id="context">1. Context</h2>
+      <p>The <strong>Earliest Finish algorithm</strong> is a greedy algorithm that selects the maximum number of non-overlapping activities. Each activity has a start time and a finish time.</p>
+      <ol class="steps">
+        <li>Sort activities by finish time, from earliest to latest.</li>
+        <li>Select the first activity.</li>
+        <li>Choose the next activity only if its start time is at or after the last selected activity's finish time.</li>
+        <li>Continue until all activities have been checked.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="algorithm">
+      <h2 id="algorithm">2. Algorithmic Response (Coding)</h2>
+      <p class="muted">This Python program sorts activities by finish time, selects compatible activities, and prints the result.</p>
+      <div class="code-head">
+        <h3>Python implementation</h3>
+        <button type="button" id="copy-code">Copy code</button>
+      </div>
+      <pre><code id="python-code">def activity_selection(activities):
+    # Sort activities by finish time
+    activities.sort(key=lambda activity: activity[1])
+
+    selected = []
+    last_finish = 0
+
+    for start, finish in activities:
+        if start &gt;= last_finish:
+            selected.append((start, finish))
+            last_finish = finish
+
+    return selected
+
+
+activities = [(1, 3), (2, 5), (3, 4), (4, 6), (6, 8)]
+
+result = activity_selection(activities)
+
+print("Selected activities:", result)
+print("Total activities:", len(result))</code></pre>
+      <p id="copy-status" class="muted" role="status" aria-live="polite"></p>
+
+      <h3>Example input</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Activity</th><th>Start</th><th>Finish</th><th>Selected?</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>1</td><td>3</td><td class="picked">Yes</td></tr>
+            <tr><td>B</td><td>2</td><td>5</td><td>No</td></tr>
+            <tr><td>C</td><td>3</td><td>4</td><td class="picked">Yes</td></tr>
+            <tr><td>D</td><td>4</td><td>6</td><td class="picked">Yes</td></tr>
+            <tr><td>E</td><td>6</td><td>8</td><td class="picked">Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Program output</h3>
+      <pre class="output"><code>Selected activities: [(1, 3), (3, 4), (4, 6), (6, 8)]
+Total activities: 4</code></pre>
+      <p class="muted">Activities may touch at endpoints: for example, one can finish at time 3 and the next can start at time 3.</p>
+    </section>
+
+    <section aria-labelledby="proof">
+      <h2 id="proof">3. Evidence / Proof</h2>
+      <p>The algorithm is correct because of the <strong>greedy-choice property</strong> and <strong>optimal substructure</strong>.</p>
+      <ol class="proof-list">
+        <li><strong>Greedy choice:</strong> Let A be an activity with the earliest finish time. Choosing A leaves at least as much time for later activities as choosing any activity that finishes later.</li>
+        <li><strong>Exchange argument:</strong> If an optimal schedule starts with another activity B, replace B with A. Since A finishes no later than B, all activities after B remain compatible. The number of selected activities does not decrease.</li>
+        <li><strong>Optimal substructure:</strong> After choosing A, the remaining task is the same problem restricted to activities that start at or after A finishes.</li>
+        <li><strong>Repeat:</strong> Applying the same reasoning to the remaining activities shows that every greedy choice can be part of an optimal schedule. Therefore, the algorithm selects the maximum possible number of compatible activities.</li>
+      </ol>
+      <div class="complexity">
+        <div class="metric"><span class="muted">Time complexity</span><strong>O(n log n)</strong><span class="muted">Sorting + one linear scan</span></div>
+        <div class="metric"><span class="muted">Extra space</span><strong>O(n)</strong><span class="muted">For the selected activities (excluding sorting details)</span></div>
+      </div>
+      <h3>Conclusion</h3>
+      <p class="callout">Earliest Finish works because choosing the activity that ends first preserves the most time for the remaining activities. The exchange argument proves that this choice does not reduce the best possible answer.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Responsive layout: designed for phones, tablets, and desktop screens. The code sample can be copied using the button above.</p>
+  </footer>
+
+  <script>
+    const copyButton = document.getElementById('copy-code');
+    const code = document.getElementById('python-code');
+    const status = document.getElementById('copy-status');
+
+    copyButton.addEventListener('click', async () => {
+      const text = code.innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        status.textContent = 'Code copied to clipboard.';
+      } catch (error) {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        status.textContent = 'Automatic copy was blocked. Select the highlighted code and copy it manually.';
+      }
+    });
+  </script>
+</body>
+</html>

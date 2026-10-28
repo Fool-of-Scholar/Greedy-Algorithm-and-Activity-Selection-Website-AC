@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>Earliest Finish Algorithm — Questions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5d687b;
+      --line: #dce3ed;
+      --paper: #ffffff;
+      --page: #f2f5fa;
+      --accent: #315ee8;
+      --accent-soft: #eaf0ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .hero {
+      padding: clamp(2rem, 6vw, 4.5rem) 1rem 2.5rem;
+      background: linear-gradient(135deg, #101827, #203a70);
+      color: white;
+    }
+    .hero-inner, main, footer {
+      width: min(100% - 2rem, 1000px);
+      margin-inline: auto;
+    }
+    .eyebrow {
+      display: inline-block;
+      margin: 0 0 .75rem;
+      padding: .25rem .65rem;
+      border: 1px solid #8198d7;
+      border-radius: 999px;
+      color: #d9e4ff;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    h1 {
+      max-width: 780px;
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .hero p {
+      max-width: 720px;
+      margin: 1rem 0 0;
+      color: #e0e8fa;
+      font-size: clamp(1rem, 2.4vw, 1.15rem);
+    }
+    main { padding-block: 1.5rem 3rem; }
+    section {
+      margin: 1.2rem 0;
+      padding: clamp(1rem, 3vw, 1.6rem);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgb(21 35 62 / 5%);
+    }
+    h2 {
+      margin: 0 0 .7rem;
+      font-size: clamp(1.25rem, 3vw, 1.65rem);
+      line-height: 1.25;
+    }
+    p { margin: .5rem 0; }
+    .question-label {
+      display: inline-block;
+      margin-bottom: .65rem;
+      padding: .2rem .6rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: .8rem;
+      font-weight: 750;
+    }
+    .question-text { font-size: 1.08rem; }
+    footer {
+      padding: 0 0 2rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    @media (max-width: 520px) {
+      .hero-inner, main, footer { width: min(100% - 1rem, 1000px); }
+      .hero { padding-top: 2.2rem; }
+      section { border-radius: 13px; padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Greedy Algorithm · Questions</p>
+      <h1>Why Earliest Finish Works</h1>
+      <p>Two coding-related questions about the Earliest Finish algorithm.</p>
+    </div>
+  </header>
+
+  <main>
+    <section aria-labelledby="question-one">
+      <span class="question-label">Question 1</span>
+      <h2 id="question-one">Algorithm Implementation</h2>
+      <p class="question-text">
+        How does the Earliest Finish algorithm select the maximum number
+        of non-overlapping activities in a program?
+      </p>
+    </section>
+
+    <section aria-labelledby="question-two">
+      <span class="question-label">Question 2</span>
+      <h2 id="question-two">Correctness and Efficiency</h2>
+      <p class="question-text">
+        Why does sorting activities by their finish time help guarantee
+        an optimal solution, and what is the algorithm's time complexity?
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Hayop na yan. Hoy! Wal-walang kanin buseng? Putanginang hayop na yan! Walang kanin?!</p>
+  </footer>
+</body>
+</html>

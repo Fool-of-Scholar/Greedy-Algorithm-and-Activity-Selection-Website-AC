@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Topic 1 Quiz: Introduction to Greedy Algorithms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-elevated: #162036;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(56, 189, 248, 0.25);
+      --primary: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    html, body {
+      min-height: 100%;
+      height: auto;
+      overflow-x: hidden;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      background: #090d16;
+      color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(16, 185, 129, 0.12), transparent 60%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(56, 189, 248, 0.12), transparent 55%),
+                  radial-gradient(800px 600px at 50% 100%, rgba(139, 92, 246, 0.08), transparent 60%),
+                  linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0/48px 48px,
+                  linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px) 0 0/48px 48px,
+                  #090d16;
+      background-attachment: fixed;
+    }
+
+    /* Ambient animated orbs */
+    .ambient-glow {
+      position: fixed;
+      border-radius: 9999px;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+      animation: float 16s ease-in-out infinite alternate;
+    }
+    .ambient-1 {
+      width: 420px;
+      height: 420px;
+      background: rgba(16, 185, 129, 0.14);
+      top: 5%;
+      left: -100px;
+    }
+    .ambient-2 {
+      width: 380px;
+      height: 380px;
+      background: rgba(56, 189, 248, 0.12);
+      bottom: 10%;
+      right: -80px;
+      animation-delay: -7s;
+    }
+    @keyframes float {
+      to { transform: translate(50px, -40px) scale(1.1); }
+    }
+
+    /* Glass card styles */
+    .glass-panel {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      border-radius: 1.25rem;
+    }
+
+    /* 4-Pics Card Styling */
+    .pic-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0.85rem;
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      cursor: pointer;
+    }
+    .pic-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 12px 28px -8px rgba(56, 189, 248, 0.25);
+    }
+    .pic-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      letter-spacing: 0.04em;
+    }
+
+    /* Letter Slot Boxes - Mobile First */
+    .letter-slot {
+      width: 36px;
+      height: 44px;
+      border-radius: 7px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #38bdf8;
+      text-transform: uppercase;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    @media (min-width: 480px) {
+      .letter-slot {
+        width: 44px;
+        height: 52px;
+        font-size: 1.5rem;
+      }
+    }
+    @media (min-width: 640px) {
+      .letter-slot {
+        width: 52px;
+        height: 60px;
+        font-size: 1.75rem;
+        border-radius: 10px;
+      }
+    }
+    .letter-slot.filled {
+      border: 2px solid #38bdf8;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(15, 23, 42, 0.9));
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
+      animation: popIn 0.2s cubic-bezier(0.2, 1.4, 0.4, 1);
+    }
+    .letter-slot.active-cursor {
+      border-color: #f59e0b;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+    }
+    .letter-slot.correct {
+      border-color: #10b981 !important;
+      color: #10b981 !important;
+      background: rgba(16, 185, 129, 0.15) !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4) !important;
+    }
+    .letter-slot.wrong {
+      border-color: #f43f5e !important;
+      color: #f43f5e !important;
+      background: rgba(244, 63, 94, 0.15) !important;
+      animation: shake 0.4s ease;
+    }
+
+    /* Letter Bank Tile - Mobile First */
+    .bank-tile {
+      width: 34px;
+      height: 40px;
+      border-radius: 6px;
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f8fafc;
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    @media (min-width: 480px) {
+      .bank-tile {
+        width: 42px;
+        height: 48px;
+        font-size: 1.25rem;
+        border-radius: 8px;
+      }
+    }
+    @media (min-width: 640px) {
+      .bank-tile {
+        width: 48px;
+        height: 52px;
+        font-size: 1.4rem;
+      }
+    }
+    .bank-tile:hover:not(:disabled) {
+      transform: translateY(-2px);
+      border-color: #38bdf8;
+      box-shadow: 0 6px 14px rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+    }
+    .bank-tile:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+    .bank-tile:disabled {
+      opacity: 0.18;
+      cursor: not-allowed;
+      transform: scale(0.92);
+      border-style: dashed;
+    }
+
+    /* Red vs Blue Pill 3D Cards */
+    .pill-card {
+      position: relative;
+      border-radius: 1.25rem;
+      padding: 1.75rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 2px solid transparent;
+      overflow: hidden;
+    }
+    .pill-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 1.25rem;
+      pointer-events: none;
+      opacity: 0.15;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Red Pill styling */
+    .pill-card.red {
+      background: radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.2), rgba(15, 23, 42, 0.95) 75%);
+      border-color: rgba(244, 63, 94, 0.35);
+      box-shadow: 0 15px 35px -10px rgba(244, 63, 94, 0.2);
+    }
+    .pill-card.red:hover {
+      transform: translateY(-6px) scale(1.02);
+      border-color: #f43f5e;
+      box-shadow: 0 20px 45px -10px rgba(244, 63, 94, 0.45), 0 0 20px rgba(244, 63, 94, 0.3);
+    }
+
+    /* Blue Pill styling */
+    .pill-card.blue {
+      background: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.2), rgba(15, 23, 42, 0.95) 75%);
+      border-color: rgba(14, 165, 233, 0.35);
+      box-shadow: 0 15px 35px -10px rgba(14, 165, 233, 0.2);
+    }
+    .pill-card.blue:hover {
+      transform: translateY(-6px) scale(1.02);
+      border-color: #0ea5e9;
+      box-shadow: 0 20px 45px -10px rgba(14, 165, 233, 0.45), 0 0 20px rgba(14, 165, 233, 0.3);
+    }
+
+    /* Pill 3D Capsule graphic */
+    .pill-capsule {
+      width: 72px;
+      height: 32px;
+      border-radius: 9999px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pill-card:hover .pill-capsule {
+      transform: rotate(-10deg) scale(1.1);
+    }
+    .pill-capsule.red-cap {
+      background: linear-gradient(135deg, #fb7185 0%, #f43f5e 50%, #9f1239 100%);
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.6), inset 0 2px 5px rgba(255, 255, 255, 0.5);
+    }
+    .pill-capsule.blue-cap {
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #0c4a6e 100%);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.6), inset 0 2px 5px rgba(255, 255, 255, 0.5);
+    }
+    .pill-capsule::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 10px;
+      width: 20px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 9999px;
+      filter: blur(1px);
+    }
+
+    /* Pill reveal states */
+    .pill-card.selected-correct {
+      border-color: #10b981 !important;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.3), rgba(15, 23, 42, 0.95) 75%) !important;
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.5) !important;
+    }
+    .pill-card.selected-wrong {
+      border-color: #f43f5e !important;
+      background: radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.25), rgba(15, 23, 42, 0.95) 75%) !important;
+      box-shadow: 0 0 40px rgba(244, 63, 94, 0.4) !important;
+      animation: shake 0.4s ease;
+    }
+    .pill-card.dimmed {
+      opacity: 0.35;
+      transform: scale(0.97);
+      pointer-events: none;
+    }
+
+    /* Keyframes */
+    @keyframes popIn {
+      0% { transform: scale(0.4); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Zoom modal for pictures */
+    #zoom-modal.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    /* Confetti canvas */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body class="relative">
+  <div class="ambient-glow ambient-1"></div>
+  <div class="ambient-glow ambient-2"></div>
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Top App Navigation / Header -->
+  <header class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/10 px-4 md:px-8 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <button id="btn-back-slide" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-white/10 transition-all">
+          <span>←</span> <span>Back to Slide 1</span>
+        </button>
+        <div class="h-4 w-px bg-white/10 hidden sm:block"></div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">CS 05 · Chapter 06</div>
+          <h1 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+            <span>Topic 1 Checkpoint: Introduction Quiz</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">4 Items</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Live Score & Streak & Audio HUD -->
+      <div class="flex items-center gap-3 ml-auto">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-white/10">
+          <div class="text-right">
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Score</div>
+            <div id="hud-score" class="text-sm font-black text-sky-400 font-mono">0 pts</div>
+          </div>
+          <div class="h-6 w-px bg-white/10"></div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Streak</div>
+            <div id="hud-streak" class="text-sm font-black text-amber-400 font-mono">0 🔥</div>
+          </div>
+        </div>
+
+        <button id="btn-sound" class="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white transition-all text-sm" title="Toggle Sound">
+          🔊
+        </button>
+      </div>
+    </div>
+
+    <!-- Stepper Progress Bar -->
+    <div class="max-w-6xl mx-auto mt-2">
+      <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 mb-1">
+        <span id="step-label">Question 1 of 4: 4 Pics 1 Word</span>
+        <span id="progress-pct" class="font-mono text-emerald-400">25% Completed</span>
+      </div>
+      <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+        <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-500 w-1/4 transition-all duration-500 rounded-full"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto px-2 sm:px-4 py-3 sm:py-8 pb-36 sm:pb-20 relative z-10">
+
+    <!-- ========================================== -->
+    <!-- ITEM 1: 4 PICS 1 WORD (GREEDY) -->
+    <!-- ========================================== -->
+    <section id="item-0" class="quiz-item space-y-4 sm:space-y-6">
+      <div class="text-center max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">
+          <span>📸 Item 1 of 4</span>
+          <span>•</span>
+          <span>4-Pics Identification</span>
+        </div>
+        <h2 class="text-lg sm:text-3xl font-black text-white">What Core Concept Do These 4 Pictures Describe?</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">
+          Tap any clue to enlarge. Form the algorithm word below:
+        </p>
+      </div>
+
+      <!-- 4 Pictures: Compact Single Row on Mobile, 4-Cols on Desktop -->
+      <div class="grid grid-cols-4 gap-1.5 sm:gap-4">
+        <!-- Pic 1 -->
+        <div class="pic-card group" onclick="openZoom('item0-pic1', 'Clue 1: Snatching Largest Coin', 'Always grabs the immediate highest denomination coin available (₱20) without hesitating.')">
+          <div class="pic-badge">Clue 1</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- Golden coin glow -->
+              <circle cx="80" cy="80" r="48" fill="url(#g-coin)" stroke="#fbbf24" stroke-width="4" filter="drop-shadow(0 0 16px rgba(251,191,36,0.6))"/>
+              <circle cx="80" cy="80" r="40" stroke="#fef08a" stroke-dasharray="4 3" stroke-width="2"/>
+              <text x="80" y="88" font-family="'JetBrains Mono', monospace" font-size="28" font-weight="900" fill="#78350f" text-anchor="middle">₱20</text>
+              <!-- Snatched hand illustration -->
+              <path d="M120 130 C110 110 100 100 92 88 C88 82 92 74 98 76 C105 78 112 88 122 96 L140 110" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+              <defs>
+                <radialGradient id="g-coin" cx="40%" cy="40%" r="65%">
+                  <stop offset="0%" stop-color="#fde047"/>
+                  <stop offset="70%" stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#b45309"/>
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">Immediate ₱20 Grab</div>
+            <div class="text-[10px] text-slate-400">Biggest local choice now</div>
+          </div>
+        </div>
+
+        <!-- Pic 2 -->
+        <div class="pic-card group" onclick="openZoom('item0-pic2', 'Clue 2: Short-Sighted Lens', 'Focuses narrowly on the immediate step right in front, rather than calculating all distant futures.')">
+          <div class="pic-badge">Clue 2</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- Background foggy path -->
+              <path d="M20 140 Q80 110 140 140" stroke="#334155" stroke-width="4" stroke-dasharray="6 4"/>
+              <circle cx="120" cy="50" r="14" fill="#334155" opacity="0.3"/>
+              <!-- Magnifying Lens focused on NOW -->
+              <circle cx="70" cy="70" r="38" fill="rgba(56,189,248,0.15)" stroke="#38bdf8" stroke-width="5" filter="drop-shadow(0 0 14px rgba(56,189,248,0.5))"/>
+              <line x1="97" y1="97" x2="135" y2="135" stroke="#38bdf8" stroke-width="8" stroke-linecap="round"/>
+              <text x="70" y="76" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="900" fill="#38bdf8" text-anchor="middle">NOW</text>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">Short-Sighted Focus</div>
+            <div class="text-[10px] text-slate-400">Local optimum view</div>
+          </div>
+        </div>
+
+        <!-- Pic 3 -->
+        <div class="pic-card group" onclick="openZoom('item0-pic3', 'Clue 3: No Backtracking / No Undo', 'Slide 1 rule: Once a choice is added to the solution, it is permanent. No backtracking allowed.')">
+          <div class="pic-badge">Clue 3</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- One way arrow forward -->
+              <path d="M80 135 L80 40 M60 60 L80 35 L100 60" stroke="#10b981" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" filter="drop-shadow(0 0 12px rgba(16,185,129,0.7))"/>
+              <!-- Prohibited U-turn -->
+              <circle cx="115" cy="115" r="24" fill="rgba(15,23,42,0.9)" stroke="#f43f5e" stroke-width="4"/>
+              <path d="M106 122 C106 112 118 112 118 122 M118 122 L114 118 M118 122 L122 118" stroke="#f43f5e" stroke-width="3" stroke-linecap="round"/>
+              <line x1="102" y1="102" x2="128" y2="128" stroke="#f43f5e" stroke-width="4"/>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">No Backtracking</div>
+            <div class="text-[10px] text-slate-400">Permanent commitment</div>
+          </div>
+        </div>
+
+        <!-- Pic 4 -->
+        <div class="pic-card group" onclick="openZoom('item0-pic4', 'Clue 4: Algorithmic Blueprint', 'Slide 3 blueprint: Prioritizes candidates with a heuristic, then immediately appends compatible ones.')">
+          <div class="pic-badge">Clue 4</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <div class="w-full h-full rounded-lg bg-slate-950 border border-slate-800 p-2 text-left font-mono text-[9px] text-slate-400 flex flex-col justify-center">
+              <div class="text-pink-400 font-bold">def solver(c):</div>
+              <div class="text-emerald-400 pl-2">ordered = prioritize(c)</div>
+              <div class="text-amber-300 pl-2">for x in ordered:</div>
+              <div class="text-sky-400 pl-4">solution.append(x)</div>
+              <div class="text-slate-500 pl-4"># lock in!</div>
+            </div>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">Blueprint Logic</div>
+            <div class="text-[10px] text-slate-400">Heuristic sort & lock</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Letter Slots Display (Answer: GREEDY - 6 letters) -->
+      <div class="glass-panel p-3 sm:p-6 text-center space-y-3 sm:space-y-5">
+        <div class="flex items-center justify-center gap-1.5 sm:gap-3 flex-wrap" id="slots-0">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Controls: Clear & Hint & Next -->
+        <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+          <button id="btn-hint-0" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[11px] sm:text-xs font-semibold transition-all">
+            💡 Hint (-20 pts)
+          </button>
+          <button id="btn-backspace-0" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold transition-all">
+            ⌫ Delete
+          </button>
+          <button id="btn-clear-0" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold transition-all">
+            ↺ Clear
+          </button>
+          <button id="btn-submit-0" onclick="submit4PicAndNext(0)" class="px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-[11px] sm:text-xs font-bold transition-all shadow-md shadow-sky-600/30">
+            Next Question →
+          </button>
+        </div>
+
+        <!-- Letter Bank Tiles -->
+        <div>
+          <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Tap Letters to Spell:</div>
+          <div class="flex items-center justify-center gap-1.5 sm:gap-2.5 flex-wrap max-w-lg mx-auto" id="bank-0">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Feedback & Explanation Box -->
+        <div id="feedback-0" class="hidden rounded-xl p-3 sm:p-4 text-left transition-all"></div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- ITEM 2: 4 PICS 1 WORD (BRUTE FORCE) -->
+    <!-- ========================================== -->
+    <section id="item-1" class="quiz-item space-y-4 sm:space-y-6 hidden">
+      <div class="text-center max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">
+          <span>📸 Item 2 of 4</span>
+          <span>•</span>
+          <span>4-Pics Identification</span>
+        </div>
+        <h2 class="text-lg sm:text-3xl font-black text-white">What Opposing Method Do These 4 Pictures Describe?</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">
+          Tap any clue to enlarge. Form the 2-word answer below:
+        </p>
+      </div>
+
+      <!-- 4 Pictures: Compact Single Row on Mobile, 4-Cols on Desktop -->
+      <div class="grid grid-cols-4 gap-1.5 sm:gap-4">
+        <!-- Pic 1 -->
+        <div class="pic-card group" onclick="openZoom('item1-pic1', 'Clue 1: Endless Ring of Keys', 'Trying every single key in existence one-by-one until one finally unlocks the door.')">
+          <div class="pic-badge">Clue 1</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- Padlock -->
+              <rect x="65" y="80" width="30" height="36" rx="6" fill="#f59e0b" stroke="#fbbf24" stroke-width="2"/>
+              <path d="M72 80 V68 C72 60 88 60 88 68 V80" stroke="#fef08a" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="80" cy="94" r="3" fill="#78350f"/>
+              <!-- Endless keys fanning out -->
+              <g stroke="#38bdf8" stroke-width="3" stroke-linecap="round">
+                <path d="M80 50 L40 30 M40 30 L35 38"/>
+                <path d="M80 50 L55 20 M55 20 L50 26"/>
+                <path d="M80 50 L80 15 M80 15 L74 20"/>
+                <path d="M80 50 L105 20 M105 20 L110 26"/>
+                <path d="M80 50 L120 30 M120 30 L125 38"/>
+              </g>
+              <circle cx="80" cy="50" r="16" stroke="#94a3b8" stroke-width="3" fill="none"/>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">Test Every Key</div>
+            <div class="text-[10px] text-slate-400">Exhaustive search</div>
+          </div>
+        </div>
+
+        <!-- Pic 2 -->
+        <div class="pic-card group" onclick="openZoom('item1-pic2', 'Clue 2: Exponential 2ⁿ Explosion', 'Slide 1: Input size n scales higher -> 2ⁿ doubles each item (30 items = over 1 Billion combinations!).')">
+          <div class="pic-badge">Clue 2</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- Axes -->
+              <line x1="30" y1="130" x2="135" y2="130" stroke="#64748b" stroke-width="2"/>
+              <line x1="30" y1="130" x2="30" y2="25" stroke="#64748b" stroke-width="2"/>
+              <!-- Exponential curve blasting upwards -->
+              <path d="M30 128 Q80 125 105 85 T130 30" stroke="#f43f5e" stroke-width="5" stroke-linecap="round" filter="drop-shadow(0 0 10px rgba(244,63,94,0.7))"/>
+              <text x="75" y="45" font-family="'JetBrains Mono', monospace" font-size="16" font-weight="900" fill="#f43f5e">2ⁿ / n!</text>
+              <text x="130" y="142" font-size="9" fill="#94a3b8">n size</text>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">2ⁿ Combinations</div>
+            <div class="text-[10px] text-slate-400">Doubles with every item</div>
+          </div>
+        </div>
+
+        <!-- Pic 3 -->
+        <div class="pic-card group" onclick="openZoom('item1-pic3', 'Clue 3: Overheated Computing', 'Slide 1 warns that calculating every possible future configuration becomes computationally impossible.')">
+          <div class="pic-badge">Clue 3</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- CPU Chip -->
+              <rect x="45" y="45" width="70" height="70" rx="8" fill="#1e1b4b" stroke="#f43f5e" stroke-width="3" filter="drop-shadow(0 0 14px rgba(244,63,94,0.5))"/>
+              <text x="80" y="82" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="800" fill="#fca5a5" text-anchor="middle">CPU</text>
+              <text x="80" y="98" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#f87171" text-anchor="middle">100% BURN</text>
+              <!-- Heat smoke particles -->
+              <path d="M55 35 Q50 25 55 15 M80 35 Q85 25 80 15 M105 35 Q100 25 105 15" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">Extreme Overhead</div>
+            <div class="text-[10px] text-slate-400">Impossible as n scales</div>
+          </div>
+        </div>
+
+        <!-- Pic 4 -->
+        <div class="pic-card group" onclick="openZoom('item1-pic4', 'Clue 4: Exhaustive Permutation Tree', 'Evaluates every single leaf and branch of all possibilities with brute-force exploration.')">
+          <div class="pic-badge">Clue 4</div>
+          <div class="aspect-square bg-slate-900/90 flex items-center justify-center p-3 relative overflow-hidden">
+            <svg class="w-full h-full" viewBox="0 0 160 160" fill="none">
+              <!-- Tree root -->
+              <circle cx="80" cy="25" r="8" fill="#38bdf8"/>
+              <!-- Branches level 1 -->
+              <line x1="80" y1="25" x2="45" y2="65" stroke="#475569" stroke-width="2"/>
+              <line x1="80" y1="25" x2="115" y2="65" stroke="#475569" stroke-width="2"/>
+              <circle cx="45" cy="65" r="6" fill="#38bdf8"/>
+              <circle cx="115" cy="65" r="6" fill="#38bdf8"/>
+              <!-- Branches level 2 -->
+              <line x1="45" y1="65" x2="25" y2="105" stroke="#475569" stroke-width="2"/>
+              <line x1="45" y1="65" x2="65" y2="105" stroke="#475569" stroke-width="2"/>
+              <line x1="115" y1="65" x2="95" y2="105" stroke="#475569" stroke-width="2"/>
+              <line x1="115" y1="65" x2="135" y2="105" stroke="#475569" stroke-width="2"/>
+              <!-- Leaves level 3 -->
+              <g fill="#f43f5e">
+                <circle cx="20" cy="135" r="4"/><circle cx="30" cy="135" r="4"/>
+                <circle cx="60" cy="135" r="4"/><circle cx="70" cy="135" r="4"/>
+                <circle cx="90" cy="135" r="4"/><circle cx="100" cy="135" r="4"/>
+                <circle cx="130" cy="135" r="4"/><circle cx="140" cy="135" r="4"/>
+              </g>
+            </svg>
+          </div>
+          <div class="p-2.5 bg-slate-900/95 text-center border-t border-white/5">
+            <div class="text-xs font-bold text-white group-hover:text-sky-400 transition-colors">All Permutations</div>
+            <div class="text-[10px] text-slate-400">Tests all branches</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Letter Slots Display (Answer: BRUTE FORCE - 2 words: 5 + 5 letters) -->
+      <div class="glass-panel p-3 sm:p-6 text-center space-y-3 sm:space-y-5">
+        <div class="flex items-center justify-center gap-1.5 sm:gap-6 flex-wrap" id="slots-1">
+          <!-- Rendered via JS with two separated word blocks -->
+        </div>
+
+        <!-- Controls: Clear & Hint & Next -->
+        <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+          <button id="btn-hint-1" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[11px] sm:text-xs font-semibold transition-all">
+            💡 Hint (-20 pts)
+          </button>
+          <button id="btn-backspace-1" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold transition-all">
+            ⌫ Delete
+          </button>
+          <button id="btn-clear-1" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white text-[11px] sm:text-xs font-semibold transition-all">
+            ↺ Clear
+          </button>
+          <button id="btn-submit-1" onclick="submit4PicAndNext(1)" class="px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-[11px] sm:text-xs font-bold transition-all shadow-md shadow-sky-600/30">
+            Next Question →
+          </button>
+        </div>
+
+        <!-- Letter Bank Tiles -->
+        <div>
+          <div class="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Tap Letters to Spell:</div>
+          <div class="flex items-center justify-center gap-1.5 sm:gap-2.5 flex-wrap max-w-lg mx-auto" id="bank-1">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Feedback & Explanation Box -->
+        <div id="feedback-1" class="hidden rounded-xl p-3 sm:p-4 text-left transition-all"></div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- ITEM 3: CHOOSE THE RED OR BLUE PILL (ITEM 3) -->
+    <!-- ========================================== -->
+    <section id="item-2" class="quiz-item space-y-6 hidden">
+      <div class="text-center max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold uppercase tracking-wider mb-2">
+          <span>💊 Item 3 of 4</span>
+          <span>•</span>
+          <span>The Matrix Dilemma</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-white">Choose the Red Pill or the Blue Pill</h2>
+        <p class="text-sm text-slate-400 mt-2">
+          Based on the <b class="text-emerald-300">greedy.py Blueprint</b> in Slide 1: One pill reveals the authentic truth of greedy commitment; the other swallows a deceptive misconception!
+        </p>
+      </div>
+
+      <!-- Dilemma Scenario Card -->
+      <div class="glass-panel p-5 sm:p-6 border-sky-500/20 bg-slate-900/90">
+        <div class="flex items-center gap-2 text-xs font-mono text-sky-400 mb-2">
+          <span>SOURCE: Slide 01 · Algorithmic Blueprint</span>
+        </div>
+        <div class="rounded-lg bg-slate-950 border border-slate-800 p-3 font-mono text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
+          <span class="text-pink-400">for</span> candidate <span class="text-pink-400">in</span> ordered_candidates:<br>
+          &nbsp;&nbsp;<span class="text-pink-400">if</span> <span class="text-emerald-400">is_compatible</span>(solution, candidate):<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;solution.<span class="text-sky-400">append</span>(candidate) <span class="text-slate-500"># ?????</span>
+        </div>
+        <p class="text-base sm:text-lg font-bold text-white">
+          Question: What truly happens once <code class="text-sky-300 bg-sky-950/60 px-1.5 py-0.5 rounded">solution.append(candidate)</code> executes in a genuine Greedy Algorithm?
+        </p>
+      </div>
+
+      <!-- The Two Pills Choice Grid -->
+      <div class="grid sm:grid-cols-2 gap-4 sm:gap-6">
+        <!-- RED PILL -->
+        <div class="pill-card red group" id="pill-2-red" onclick="selectPill(2, 'red')">
+          <div class="flex items-center justify-between mb-4">
+            <div class="pill-capsule red-cap"></div>
+            <span class="text-[11px] font-mono font-bold tracking-wider text-rose-400 uppercase bg-rose-950/60 px-2.5 py-1 rounded-full border border-rose-500/30">
+              The Red Pill · Reality
+            </span>
+          </div>
+          <h3 class="text-lg font-extrabold text-white group-hover:text-rose-300 transition-colors mb-2">
+            Permanent Commitment: No Undo, No Backtracking
+          </h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            The candidate is appended with <b>permanent commitment</b>. A greedy algorithm takes the immediate local optimum and <b>never backtracks or reconsiders</b> past decisions, moving strictly forward.
+          </p>
+          <div class="mt-4 pt-3 border-t border-rose-500/20 text-xs font-semibold text-rose-400 flex items-center justify-between">
+            <span>Swallow Red Pill</span>
+            <span>→</span>
+          </div>
+        </div>
+
+        <!-- BLUE PILL -->
+        <div class="pill-card blue group" id="pill-2-blue" onclick="selectPill(2, 'blue')">
+          <div class="flex items-center justify-between mb-4">
+            <div class="pill-capsule blue-cap"></div>
+            <span class="text-[11px] font-mono font-bold tracking-wider text-sky-400 uppercase bg-sky-950/60 px-2.5 py-1 rounded-full border border-sky-500/30">
+              The Blue Pill · Illusion
+            </span>
+          </div>
+          <h3 class="text-lg font-extrabold text-white group-hover:text-sky-300 transition-colors mb-2">
+            Provisional Probation: Backtracks If Stalled
+          </h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            The candidate is appended only <b>provisionally</b>. If subsequent candidates fail to lead toward a good outcome later on, the greedy algorithm <b>backtracks and undoes</b> earlier choices.
+          </p>
+          <div class="mt-4 pt-3 border-t border-sky-500/20 text-xs font-semibold text-sky-400 flex items-center justify-between">
+            <span>Swallow Blue Pill</span>
+            <span>→</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback / Explanation for Item 3 -->
+      <div id="feedback-2" class="hidden rounded-xl p-5 text-left transition-all"></div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- ITEM 4: CHOOSE THE RED OR BLUE PILL (ITEM 4) -->
+    <!-- ========================================== -->
+    <section id="item-3" class="quiz-item space-y-6 hidden">
+      <div class="text-center max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">
+          <span>💊 Item 4 of 4</span>
+          <span>•</span>
+          <span>The Coin Change Dilemma</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-white">Choose the Red Pill or the Blue Pill</h2>
+        <p class="text-sm text-slate-400 mt-2">
+          From the <b class="text-emerald-300">Coin Change Sandbox</b> in Slide 1: Coins ₱20, ₱10, ₱5, ₱1. Which statement reflects the mathematical truth of why Greedy wins?
+        </p>
+      </div>
+
+      <!-- Dilemma Scenario Card -->
+      <div class="glass-panel p-5 sm:p-6 border-amber-500/20 bg-slate-900/90">
+        <div class="flex items-center gap-2 text-xs font-mono text-amber-400 mb-2">
+          <span>SOURCE: Slide 01 · Interactive Sandbox & "Why Greedy Wins"</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-950 border border-slate-800 mb-4 flex-wrap">
+          <span class="text-xs text-slate-400 font-semibold">Sandbox Coinage:</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">₱20</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">₱10</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">₱5</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">₱1</span>
+        </div>
+        <p class="text-base sm:text-lg font-bold text-white">
+          Question: Why does the Greedy strategy (always choosing the largest available coin ≤ remaining balance) guarantee the minimum number of coins here?
+        </p>
+      </div>
+
+      <!-- The Two Pills Choice Grid -->
+      <div class="grid sm:grid-cols-2 gap-4 sm:gap-6">
+        <!-- BLUE PILL (TRAP) -->
+        <div class="pill-card blue group" id="pill-3-blue" onclick="selectPill(3, 'blue')">
+          <div class="flex items-center justify-between mb-4">
+            <div class="pill-capsule blue-cap"></div>
+            <span class="text-[11px] font-mono font-bold tracking-wider text-sky-400 uppercase bg-sky-950/60 px-2.5 py-1 rounded-full border border-sky-500/30">
+              The Blue Pill · Illusion
+            </span>
+          </div>
+          <h3 class="text-lg font-extrabold text-white group-hover:text-sky-300 transition-colors mb-2">
+            Universal Coin Law: Works On Any Set of Coins
+          </h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Greedy coin change is an <b>absolute law of nature</b> that succeeds for every conceivable coin currency, even arbitrary odd coin sets like {₱4, ₱3, ₱1}.
+          </p>
+          <div class="mt-4 pt-3 border-t border-sky-500/20 text-xs font-semibold text-sky-400 flex items-center justify-between">
+            <span>Swallow Blue Pill</span>
+            <span>→</span>
+          </div>
+        </div>
+
+        <!-- RED PILL (TRUTH) -->
+        <div class="pill-card red group" id="pill-3-red" onclick="selectPill(3, 'red')">
+          <div class="flex items-center justify-between mb-4">
+            <div class="pill-capsule red-cap"></div>
+            <span class="text-[11px] font-mono font-bold tracking-wider text-rose-400 uppercase bg-rose-950/60 px-2.5 py-1 rounded-full border border-rose-500/30">
+              The Red Pill · Reality
+            </span>
+          </div>
+          <h3 class="text-lg font-extrabold text-white group-hover:text-rose-300 transition-colors mb-2">
+            Divisibility Principle: Non-Greedy Needs More Coins
+          </h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            It works specifically because ₱20, ₱10, ₱5, and ₱1 <b>divide neatly into each other</b>. Replacing one ₱20 requires at least two ₱10s, so skipping the largest coin always costs <b>more or equal coins</b>.
+          </p>
+          <div class="mt-4 pt-3 border-t border-rose-500/20 text-xs font-semibold text-rose-400 flex items-center justify-between">
+            <span>Swallow Red Pill</span>
+            <span>→</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback / Explanation for Item 4 -->
+      <div id="feedback-3" class="hidden rounded-xl p-5 text-left transition-all"></div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- FINAL COMPLETION / RESULTS SCREEN -->
+    <!-- ========================================== -->
+    <section id="item-results" class="space-y-6 hidden">
+      <div class="glass-panel p-6 sm:p-8 text-center max-w-2xl mx-auto space-y-6 border-emerald-500/30">
+        <div class="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-4xl shadow-lg shadow-emerald-500/30" id="res-trophy">
+          🏆
+        </div>
+
+        <div>
+          <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-widest">
+            Topic 1 Mastery Complete
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-black text-white mt-2" id="res-title">Outstanding Performance!</h2>
+          <p class="text-slate-400 text-sm mt-1" id="res-subtitle">You have thoroughly mastered the foundational concepts of Greedy Algorithms from Slide 1.</p>
+        </div>
+
+        <!-- Score stats banner -->
+        <div class="grid grid-cols-3 gap-3 p-4 rounded-xl bg-slate-950/70 border border-white/5 font-mono">
+          <div>
+            <div class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Total Score</div>
+            <div class="text-xl sm:text-2xl font-black text-sky-400" id="res-score">400 pts</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Accuracy</div>
+            <div class="text-xl sm:text-2xl font-black text-emerald-400" id="res-acc">100%</div>
+          </div>
+          <div>
+            <div class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Max Streak</div>
+            <div class="text-xl sm:text-2xl font-black text-amber-400" id="res-streak">4 🔥</div>
+          </div>
+        </div>
+
+        <!-- Status notification: answers hidden -->
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-white/10 text-center space-y-2">
+          <div class="text-sm font-bold text-slate-200">🔒 All 4 Responses Recorded</div>
+          <div class="text-xs text-slate-400 leading-relaxed">
+            Answers are concealed during presentation mode. Full solutions, proofs, and explanations are available in the <b>Master Answer Key (Slide 13)</b>.
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-center gap-3 pt-3 flex-wrap">
+          <button onclick="retakeQuiz()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm border border-white/10 transition-all">
+            ↺ Retake Quiz
+          </button>
+          <button id="btn-next-quiz" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-400 hover:to-sky-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition-all hover:scale-105">
+            Next: EFT Quiz →
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Zoom Modal for 4-Pics -->
+  <div id="zoom-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="glass-panel p-6 max-w-md w-full relative space-y-4 border-sky-500/30">
+      <button onclick="closeZoom()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold">
+        ✕
+      </button>
+      <div id="zoom-content" class="w-full aspect-square bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center p-4"></div>
+      <div>
+        <h3 id="zoom-title" class="text-base font-extrabold text-white"></h3>
+        <p id="zoom-desc" class="text-xs text-slate-400 mt-1 leading-relaxed"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // SOUND FX SYSTEM (Web Audio API Synthesizer)
+    // ==========================================
+    let soundEnabled = true;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+
+    function getAudioCtx() {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+
+    function playTone(freq, type, duration, delay = 0) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + duration);
+      } catch (e) {}
+    }
+
+    function soundLetterPlace() {
+      playTone(520, 'sine', 0.08);
+    }
+    function soundLetterRemove() {
+      playTone(320, 'sine', 0.08);
+    }
+    function soundCorrect() {
+      playTone(523.25, 'triangle', 0.12, 0);     // C5
+      playTone(659.25, 'triangle', 0.12, 0.09);  // E5
+      playTone(783.99, 'triangle', 0.18, 0.18);  // G5
+      playTone(1046.50, 'triangle', 0.35, 0.28); // C6
+    }
+    function soundWrong() {
+      playTone(220, 'sawtooth', 0.15, 0);
+      playTone(180, 'sawtooth', 0.25, 0.12);
+    }
+    function soundPillSwallow() {
+      playTone(400, 'sine', 0.12, 0);
+      playTone(800, 'triangle', 0.2, 0.08);
+    }
+    function soundFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+      notes.forEach((n, idx) => playTone(n, 'triangle', 0.25, idx * 0.1));
+    }
+
+    const btnSound = document.getElementById('btn-sound');
+    btnSound.onclick = () => {
+      soundEnabled = !soundEnabled;
+      btnSound.textContent = soundEnabled ? '🔊' : '🔇';
+      btnSound.title = soundEnabled ? 'Sound is ON' : 'Sound is MUTED';
+    };
+
+    // ==========================================
+    // QUIZ STATE & DATA
+    // ==========================================
+    let score = 0;
+    let streak = 0;
+    let maxStreak = 0;
+    let currentItemIdx = 0;
+
+    const quizItems = [
+      {
+        type: '4pic',
+        word: 'GREEDY',
+        tiles: ['O', 'D', 'P', 'E', 'A', 'Y', 'M', 'R', 'L', 'G', 'T', 'E'],
+        explanation: '🎯 Spot on! A <b>GREEDY</b> algorithm takes the most advantageous choice available at the immediate moment (a local optimum) and never backtracks, hoping it leads to a global optimum.'
+      },
+      {
+        type: '4pic',
+        word: 'BRUTEFORCE',
+        displaySeparators: [5], // Space after index 5 (BRUTE FORCE)
+        tiles: ['K', 'R', 'C', 'T', 'X', 'O', 'E', 'P', 'B', 'F', 'U', 'L', 'E', 'R'],
+        explanation: '🎯 Exactly! <b>BRUTE FORCE</b> checks all 2ⁿ subsets or n! permutations. As Slide 1 notes, with 30 items, 2³⁰ requires over 1 billion tries, becoming computationally impossible.'
+      },
+      {
+        type: 'pill',
+        correctPill: 'red',
+        explanationCorrect: '🔴 You took the Red Pill and saw the truth! Slide 1\'s generic blueprint explicitly documents: <code># Permanent commitment: no undo / backtracking</code>. Once a choice is added, it is locked in permanently.',
+        explanationWrong: '🔵 You swallowed the Blue Pill of false comfort! A Greedy algorithm NEVER undoes choices or backtracks on previous decisions. Backtracking belongs to exhaustive recursion or Dynamic Programming!'
+      },
+      {
+        type: 'pill',
+        correctPill: 'red',
+        explanationCorrect: '🔴 Reality confirmed! Slide 1 points out that ₱20, ₱10, ₱5, and ₱1 divide neatly into each other. Replacing one ₱20 requires at least two ₱10 coins, so skipping the larger coin always requires more or equal total coins.',
+        explanationWrong: '🔵 You fell for the illusion! Slide 1 explicitly warns: <i>"With odd coins (like 1, 3, 4) greedy can fail, which later slides explore."</i> For target 6 with {4, 3, 1}, greedy takes 4+1+1 (3 coins) while optimal is 3+3 (2 coins)!'
+      }
+    ];
+
+    // Per-item answers for 4-pic items
+    const answers = [
+      Array(6).fill(''),
+      Array(10).fill('')
+    ];
+    const usedBankTiles = [
+      Array(12).fill(false),
+      Array(14).fill(false)
+    ];
+
+    function updateHUD() {
+      document.getElementById('hud-score').textContent = score + ' pts';
+      document.getElementById('hud-streak').textContent = streak + ' 🔥';
+      if (streak > maxStreak) maxStreak = streak;
+
+      const pct = Math.round(((currentItemIdx + 1) / 4) * 100);
+      document.getElementById('progress-pct').textContent = (currentItemIdx >= 4 ? 100 : pct) + '% Completed';
+      document.getElementById('quiz-progress-bar').style.width = (currentItemIdx >= 4 ? 100 : pct) + '%';
+
+      if (currentItemIdx < 4) {
+        const itemType = quizItems[currentItemIdx].type === '4pic' ? '4 Pics 1 Word' : 'Red or Blue Pill';
+        document.getElementById('step-label').textContent = `Question ${currentItemIdx + 1} of 4: ${itemType}`;
+      } else {
+        document.getElementById('step-label').textContent = 'Completed!';
+      }
+    }
+
+    // ==========================================
+    // RENDER 4-PICS ITEMS (0 and 1)
+    // ==========================================
+    function render4PicItem(itemIdx) {
+      const data = quizItems[itemIdx];
+      const slotsContainer = document.getElementById('slots-' + itemIdx);
+      const bankContainer = document.getElementById('bank-' + itemIdx);
+
+      // Render Slots
+      slotsContainer.innerHTML = '';
+      if (data.displaySeparators) {
+        // Multi-word grouping (e.g. BRUTE and FORCE)
+        const part1 = document.createElement('div');
+        part1.className = 'flex items-center gap-1.5 sm:gap-2';
+        const part2 = document.createElement('div');
+        part2.className = 'flex items-center gap-1.5 sm:gap-2';
+
+        data.word.split('').forEach((letter, i) => {
+          const slot = document.createElement('div');
+          slot.className = 'letter-slot' + (answers[itemIdx][i] ? ' filled' : '');
+          slot.textContent = answers[itemIdx][i] || '';
+          slot.onclick = () => removeLetter(itemIdx, i);
+          if (i < data.displaySeparators[0]) {
+            part1.appendChild(slot);
+          } else {
+            part2.appendChild(slot);
+          }
+        });
+        slotsContainer.appendChild(part1);
+        slotsContainer.appendChild(part2);
+      } else {
+        data.word.split('').forEach((letter, i) => {
+          const slot = document.createElement('div');
+          slot.className = 'letter-slot' + (answers[itemIdx][i] ? ' filled' : '');
+          slot.textContent = answers[itemIdx][i] || '';
+          slot.onclick = () => removeLetter(itemIdx, i);
+          slotsContainer.appendChild(slot);
+        });
+      }
+
+      // Render Bank Tiles
+      bankContainer.innerHTML = '';
+      data.tiles.forEach((letter, tileIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'bank-tile';
+        btn.textContent = letter;
+        btn.disabled = usedBankTiles[itemIdx][tileIdx];
+        btn.onclick = () => placeLetter(itemIdx, tileIdx, letter);
+        bankContainer.appendChild(btn);
+      });
+    }
+
+    function placeLetter(itemIdx, tileIdx, letter) {
+      const data = quizItems[itemIdx];
+      // Find first empty slot
+      const emptySlotIdx = answers[itemIdx].findIndex(ch => ch === '');
+      if (emptySlotIdx === -1) return; // All full
+
+      answers[itemIdx][emptySlotIdx] = letter;
+      usedBankTiles[itemIdx][tileIdx] = true;
+      soundLetterPlace();
+
+      render4PicItem(itemIdx);
+      check4PicAnswer(itemIdx);
+    }
+
+    function removeLetter(itemIdx, slotIdx) {
+      if (!answers[itemIdx][slotIdx]) return;
+      const charToRemove = answers[itemIdx][slotIdx];
+      answers[itemIdx][slotIdx] = '';
+
+      // Free corresponding tile in bank
+      const data = quizItems[itemIdx];
+      for (let i = 0; i < data.tiles.length; i++) {
+        if (data.tiles[i] === charToRemove && usedBankTiles[itemIdx][i]) {
+          usedBankTiles[itemIdx][i] = false;
+          break;
+        }
+      }
+      soundLetterRemove();
+      render4PicItem(itemIdx);
+    }
+
+    function backspace(itemIdx) {
+      // Remove last filled letter
+      for (let i = answers[itemIdx].length - 1; i >= 0; i--) {
+        if (answers[itemIdx][i] !== '') {
+          removeLetter(itemIdx, i);
+          break;
+        }
+      }
+    }
+
+    function clearSlots(itemIdx) {
+      answers[itemIdx].fill('');
+      usedBankTiles[itemIdx].fill(false);
+      soundLetterRemove();
+      render4PicItem(itemIdx);
+    }
+
+    function giveHint(itemIdx) {
+      const data = quizItems[itemIdx];
+      // Find first slot where answer is empty or incorrect
+      let targetSlot = -1;
+      for (let i = 0; i < data.word.length; i++) {
+        if (answers[itemIdx][i] !== data.word[i]) {
+          targetSlot = i;
+          break;
+        }
+      }
+      if (targetSlot === -1) return;
+
+      // Deduct points for hint
+      score = Math.max(0, score - 20);
+      updateHUD();
+
+      // If already filled with wrong letter, free it
+      if (answers[itemIdx][targetSlot] !== '') {
+        removeLetter(itemIdx, targetSlot);
+      }
+
+      // Find unused matching letter in bank
+      const targetChar = data.word[targetSlot];
+      let foundBankIdx = -1;
+      for (let i = 0; i < data.tiles.length; i++) {
+        if (data.tiles[i] === targetChar && !usedBankTiles[itemIdx][i]) {
+          foundBankIdx = i;
+          break;
+        }
+      }
+
+      if (foundBankIdx !== -1) {
+        placeLetter(itemIdx, foundBankIdx, targetChar);
+      }
+    }
+
+    function check4PicAnswer(itemIdx) {
+      // Subtly play letter sound without revealing answer
+      const data = quizItems[itemIdx];
+      const currentWord = answers[itemIdx].join('');
+      if (currentWord.length === data.word.length) {
+        soundLetterPlace();
+      }
+    }
+
+    function submit4PicAndNext(itemIdx) {
+      const data = quizItems[itemIdx];
+      const currentWord = answers[itemIdx].join('');
+      if (currentWord === data.word) {
+        score += 100;
+        streak++;
+      } else {
+        streak = 0;
+      }
+      updateHUD();
+      advanceNextItem();
+    }
+
+    // Bind item 0 and item 1 buttons
+    document.getElementById('btn-backspace-0').onclick = () => backspace(0);
+    document.getElementById('btn-clear-0').onclick = () => clearSlots(0);
+    document.getElementById('btn-hint-0').onclick = () => giveHint(0);
+
+    document.getElementById('btn-backspace-1').onclick = () => backspace(1);
+    document.getElementById('btn-clear-1').onclick = () => clearSlots(1);
+    document.getElementById('btn-hint-1').onclick = () => giveHint(1);
+
+    // Physical Keyboard Typing Support for 4-Pics
+    window.addEventListener('keydown', (e) => {
+      if (currentItemIdx > 1) return; // Only for 4-pic questions
+      const char = e.key.toUpperCase();
+      if (/^[A-Z]$/.test(char) && char.length === 1) {
+        const data = quizItems[currentItemIdx];
+        // Find if this character is available in current bank
+        for (let i = 0; i < data.tiles.length; i++) {
+          if (data.tiles[i] === char && !usedBankTiles[currentItemIdx][i]) {
+            placeLetter(currentItemIdx, i, char);
+            break;
+          }
+        }
+      } else if (e.key === 'Backspace') {
+        backspace(currentItemIdx);
+      }
+    });
+
+    // ==========================================
+    // MATRIX RED VS BLUE PILL LOGIC (Items 2 and 3)
+    // ==========================================
+    let pillLocked = [false, false];
+
+    function selectPill(itemIdx, chosenColor) {
+      const lockIdx = itemIdx - 2;
+      if (pillLocked[lockIdx]) return;
+      pillLocked[lockIdx] = true;
+
+      soundPillSwallow();
+      const data = quizItems[itemIdx];
+      const isCorrect = chosenColor === data.correctPill;
+
+      const redCard = document.getElementById(`pill-${itemIdx}-red`);
+      const blueCard = document.getElementById(`pill-${itemIdx}-blue`);
+      const feedback = document.getElementById(`feedback-${itemIdx}`);
+
+      // Neutral active selection highlight (DO NOT reveal right/wrong!)
+      if (chosenColor === 'red') {
+        redCard.style.borderColor = '#38bdf8';
+        redCard.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.45)';
+        blueCard.style.opacity = '0.5';
+      } else {
+        blueCard.style.borderColor = '#38bdf8';
+        blueCard.style.boxShadow = '0 0 25px rgba(56, 189, 248, 0.45)';
+        redCard.style.opacity = '0.5';
+      }
+
+      // Record score silently
+      if (isCorrect) {
+        streak++;
+        score += 100 + (streak * 10);
+      } else {
+        streak = 0;
+      }
+      updateHUD();
+
+      // Show neutral next button without showing correct/incorrect answer!
+      feedback.className = 'rounded-xl p-3 sm:p-4 text-center transition-all bg-slate-900/90 border border-sky-500/30';
+      feedback.innerHTML = `
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="text-xs sm:text-sm font-semibold text-sky-300">
+            Selection recorded: <b class="text-white uppercase">${chosenColor} Pill</b>
+          </span>
+          <button onclick="advanceNextItem()" class="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-sky-500/25 transition-all hover:scale-105">
+            ${itemIdx === 3 ? 'Finish Quiz & View Score 🏆' : 'Next Question →'}
+          </button>
+        </div>
+      `;
+      feedback.classList.remove('hidden');
+    }
+
+    // ==========================================
+    // STEP NAVIGATION & COMPLETION
+    // ==========================================
+    function advanceNextItem() {
+      document.getElementById('item-' + currentItemIdx).classList.add('hidden');
+      currentItemIdx++;
+
+      if (currentItemIdx < 4) {
+        document.getElementById('item-' + currentItemIdx).classList.remove('hidden');
+        if (currentItemIdx === 1) render4PicItem(1);
+        updateHUD();
+      } else {
+        // SHOW RESULTS SCREEN
+        updateHUD();
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('item-results').classList.remove('hidden');
+      document.getElementById('res-score').textContent = score + ' pts';
+      document.getElementById('res-streak').textContent = maxStreak + ' 🔥';
+
+      const pct = Math.round((score / 440) * 100);
+      document.getElementById('res-acc').textContent = Math.min(100, Math.max(0, pct)) + '%';
+
+      if (score >= 350) {
+        document.getElementById('res-trophy').textContent = '🏆';
+        document.getElementById('res-title').textContent = 'Greedy Algorithm Master!';
+        document.getElementById('res-subtitle').textContent = 'Flawless comprehension of Slide 1 heuristics, local vs global optima, and coin divisibility.';
+        soundFanfare();
+        triggerConfetti();
+      } else if (score >= 200) {
+        document.getElementById('res-trophy').textContent = '🥈';
+        document.getElementById('res-title').textContent = 'Solid Performance!';
+        document.getElementById('res-subtitle').textContent = 'Good grasp of the basics. Review the coin divisibility and no-backtracking rules in Slide 1 to solidify your mastery!';
+      } else {
+        document.getElementById('res-trophy').textContent = '💡';
+        document.getElementById('res-title').textContent = 'Keep Practicing!';
+        document.getElementById('res-subtitle').textContent = 'Take another look at Slide 1 to review why greedy heuristics avoid brute force 2ⁿ search.';
+      }
+    }
+
+    function retakeQuiz() {
+      score = 0;
+      streak = 0;
+      maxStreak = 0;
+      currentItemIdx = 0;
+      answers[0].fill('');
+      answers[1].fill('');
+      usedBankTiles[0].fill(false);
+      usedBankTiles[1].fill(false);
+      pillLocked = [false, false];
+
+      document.getElementById('item-results').classList.add('hidden');
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('item-' + i).classList.add('hidden');
+        const fb = document.getElementById('feedback-' + i);
+        if (fb) fb.classList.add('hidden');
+      }
+
+      // Reset pill cards
+      [2, 3].forEach(idx => {
+        ['red', 'blue'].forEach(col => {
+          const c = document.getElementById(`pill-${idx}-${col}`);
+          c.className = `pill-card ${col} group`;
+        });
+      });
+
+      // Enable hint/clear buttons
+      [0, 1].forEach(i => {
+        document.getElementById('btn-hint-' + i).disabled = false;
+        document.getElementById('btn-backspace-' + i).disabled = false;
+        document.getElementById('btn-clear-' + i).disabled = false;
+      });
+
+      document.getElementById('item-0').classList.remove('hidden');
+      render4PicItem(0);
+      updateHUD();
+    }
+
+    // ==========================================
+    // ZOOM MODAL FOR 4-PICS
+    // ==========================================
+    function openZoom(clueId, title, desc) {
+      const modal = document.getElementById('zoom-modal');
+      const targetCard = event.currentTarget.querySelector('svg, div.aspect-square > div');
+      const container = document.getElementById('zoom-content');
+      container.innerHTML = targetCard.outerHTML;
+      document.getElementById('zoom-title').textContent = title;
+      document.getElementById('zoom-desc').textContent = desc;
+      modal.classList.add('open');
+    }
+
+    function closeZoom() {
+      document.getElementById('zoom-modal').classList.remove('open');
+    }
+    document.getElementById('zoom-modal').onclick = (e) => {
+      if (e.target.id === 'zoom-modal') closeZoom();
+    };
+
+    // ==========================================
+    // CONFETTI PARTICLES
+    // ==========================================
+    function triggerConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#10b981', '#38bdf8', '#f59e0b', '#f43f5e', '#a855f7'];
+
+      for (let i = 0; i < 90; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height * 0.4,
+          r: Math.random() * 6 + 3,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 14,
+          vy: (Math.random() - 0.8) * 14,
+          gravity: 0.28,
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 10
+        });
+      }
+
+      let animId;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let alive = false;
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.rotation += p.vRot;
+          if (p.y < canvas.height) alive = true;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 1.4);
+          ctx.restore();
+        });
+
+        if (alive) animId = requestAnimationFrame(animate);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      animate();
+    }
+
+    // ==========================================
+    // PRESENTATION INTEGRATION LINKS
+    // ==========================================
+    document.getElementById('btn-back-slide').onclick = () => {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'GOTO_TOPIC', index: 0 }, '*');
+      } else {
+        window.location.href = 'index.html';
+      }
+    };
+
+    const btnNextQuiz = document.getElementById('btn-next-quiz');
+    if (btnNextQuiz) {
+      btnNextQuiz.onclick = () => {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'GOTO_TOPIC', index: 9 }, '*'); // Slide 10: EFT Questions
+        } else {
+          window.location.href = 'EFT Questions (1).html';
+        }
+      };
+    }
+
+    // Startup
+    render4PicItem(0);
+    updateHUD();
+  </script>
+</body>
+</html>

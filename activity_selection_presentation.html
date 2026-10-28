@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracing the Activity Selection</title>
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --border-color: #1e293b;
+      --border-accent: #334155;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: #a5b4fc;
+      --cyan: #06b6d4;
+      --cyan-light: #67e8f9;
+      --emerald: #10b981;
+      --emerald-light: #6ee7b7;
+      --rose: #f43f5e;
+      --rose-light: #fda4af;
+      --amber: #f59e0b;
+      --amber-light: #fde68a;
+      --text-white: #ffffff;
+      --text-high: #f8fafc;
+      --text-medium: #cbd5e1;
+      --text-muted: #94a3b8;
+      --text-low: #64748b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden; /* Zero page scroll */
+      background-color: var(--bg-dark);
+      color: var(--text-high);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
+      user-select: text;
+    }
+
+    /* Top Accent Progress Bar */
+    .top-progress-accent {
+      height: 3px;
+      width: 100%;
+      background: #1e293b;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    .top-progress-fill {
+      height: 100%;
+      width: 9%;
+      background: linear-gradient(90deg, var(--cyan), var(--primary-light));
+      transition: width 0.3s ease;
+    }
+
+    /* Fixed Viewport Container (Optimized height: 100vh - 48px footer) */
+    .deck-viewport {
+      height: calc(100vh - 48px);
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Slide Frame */
+    .slide-frame {
+      display: none;
+      height: 100%;
+      width: 100%;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px 36px 10px 36px;
+      flex-direction: column;
+      justify-content: flex-start;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .slide-frame.active {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ================= VISIBLE TEXT HIERARCHY ================= */
+    /* Enlarged slide-hero-header for clear prominence */
+    .slide-hero-header {
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+
+    /* Tier 1: Main Slide Titles (Enlarged) */
+    .slide-hero-title {
+      font-size: 2.15rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .slide-hero-title .tag {
+      font-size: 0.82rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(6, 182, 212, 0.16);
+      color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+
+    /* Tier 2: Slide Subheadings */
+    .slide-lead-text {
+      font-size: 1.02rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Tier 3: Card Titles & Section Headings */
+    .card-title-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Tier 4: Primary Content & Body Text */
+    .body-primary-text {
+      font-size: 1.04rem;
+      font-weight: 400;
+      color: var(--text-medium);
+      line-height: 1.55;
+    }
+
+    /* Tier 5: Key Values & Accents */
+    .key-term { color: var(--text-white); font-weight: 700; }
+    .accent-cyan-text { color: var(--cyan-light); font-weight: 700; }
+    .accent-emerald-text { color: var(--emerald-light); font-weight: 700; }
+    .accent-rose-text { color: var(--rose-light); font-weight: 700; }
+
+    /* Compact Cards */
+    .present-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    /* ================= VERTICAL STEPS (Greedy Approach) ================= */
+    .greedy-steps-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .step-card-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 16px;
+      margin-bottom: 0;
+    }
+
+    .step-num-circle {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .step-title-bold {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .step-desc-text {
+      font-size: 0.92rem;
+      color: var(--text-medium);
+      line-height: 1.45;
+    }
+
+    /* ================= IN-TABLE CONTROLS ================= */
+    .table-step-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #090e18;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-accent);
+    }
+
+    .table-step-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--cyan-light);
+      padding: 1px 6px;
+    }
+
+    .btn-tbl {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn-tbl:hover:not(:disabled) {
+      background: var(--primary);
+      border-color: var(--primary-light);
+      color: #ffffff;
+    }
+
+    .btn-tbl-primary {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff;
+      border-color: #38bdf8;
+    }
+
+    .btn-tbl-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    }
+
+    .btn-tbl-reset {
+      background: #1e293b;
+      color: #fca5a5;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+
+    .btn-tbl-reset:hover:not(:disabled) {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: var(--rose);
+      color: #ffffff;
+    }
+
+    .btn-tbl:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Editable Time Inputs - Clean Borderless & No Spinners */
+    .time-input {
+      width: 100%;
+      max-width: 58px;
+      background: transparent;
+      border: none;
+      outline: none;
+      border-radius: 4px;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 4px 2px;
+      -moz-appearance: textfield;
+      appearance: textfield;
+      transition: background-color 0.15s;
+      cursor: text;
+    }
+
+    /* Remove up and down spinner buttons across WebKit/Blink (Chrome, Edge, Safari, Opera) */
+    .time-input::-webkit-outer-spin-button,
+    .time-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .time-input:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .time-input:focus {
+      background: rgba(6, 182, 212, 0.15);
+      border: none;
+      outline: none;
+    }
+
+    /* ================= PRESENTATION TABLES ================= */
+    .present-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      background: #090e1a;
+      font-size: 0.92rem;
+    }
+
+    .present-table th, .present-table td {
+      padding: 8px 14px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .present-table th {
+      background: #131c2e;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .present-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .present-table tbody tr {
+      transition: background 0.15s ease;
+    }
+
+    .cell-selected {
+      background: rgba(16, 185, 129, 0.2) !important;
+      color: var(--emerald-light) !important;
+      font-weight: 700;
+    }
+
+    .cell-skipped {
+      background: rgba(244, 63, 94, 0.2) !important;
+      color: var(--rose-light) !important;
+      font-weight: 600;
+    }
+
+    .cell-highlight {
+      background: rgba(99, 102, 241, 0.25) !important;
+      color: #c7d2fe !important;
+      font-weight: 800;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .badge-select {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--emerald-light);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .badge-skip {
+      background: rgba(244, 63, 94, 0.2);
+      color: var(--rose-light);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+
+    /* ================= SLIDE 5: SPLIT LAYOUT (TRACING & TIMELINE) ================= */
+    .tracing-split-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .trace-rows-table tr {
+      cursor: pointer;
+    }
+
+    .trace-rows-table tr.hidden-trace-row {
+      display: none;
+    }
+
+    .trace-rows-table tr.active-trace-row {
+      background: rgba(99, 102, 241, 0.25) !important;
+      box-shadow: inset 4px 0 0 var(--cyan);
+    }
+
+    /* Timeline Component */
+    .timeline-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      min-height: 0;
+    }
+
+    .timeline-plot {
+      background: #070c17;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 12px 14px 30px 65px;
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+      min-height: 200px;
+      max-height: 235px;
+    }
+
+    .timeline-grid-lines {
+      position: absolute;
+      top: 0;
+      bottom: 24px;
+      left: 65px;
+      right: 14px;
+      pointer-events: none;
+    }
+
+    .grid-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .plot-activity-rows {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .plot-row {
+      position: relative;
+      height: 22px;
+      display: flex;
+      align-items: center;
+    }
+
+    .plot-row-label {
+      position: absolute;
+      left: -58px;
+      width: 52px;
+      text-align: right;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .plot-bar-track {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .interval-bar {
+      position: absolute;
+      height: 20px;
+      top: 1px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #ffffff;
+      transition: all 0.22s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      padding: 0 4px;
+    }
+
+    .bar-idle {
+      background: #1e293b;
+      color: #64748b;
+      border: 1px dashed #334155;
+    }
+
+    .bar-chosen {
+      background: linear-gradient(90deg, #059669, #10b981);
+      border: 1px solid #34d399;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .bar-rejected {
+      background: rgba(244, 63, 94, 0.22);
+      border: 1px dashed #f43f5e;
+      color: #fda4af;
+      text-decoration: line-through;
+      opacity: 0.75;
+    }
+
+    /* Vertical Marker */
+    .marker-last-finish {
+      position: absolute;
+      top: 0;
+      bottom: 24px;
+      width: 2px;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      z-index: 10;
+      transition: left 0.25s ease;
+      pointer-events: none;
+    }
+
+    .marker-last-finish::after {
+      content: 'last_finish = ' attr(data-val);
+      position: absolute;
+      top: 2px;
+      left: 5px;
+      background: var(--cyan);
+      color: #070c17;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    .plot-time-axis {
+      position: absolute;
+      bottom: 0;
+      left: 65px;
+      right: 14px;
+      height: 24px;
+      border-top: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .axis-tick {
+      position: relative;
+      width: 0;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 3px;
+    }
+
+    .axis-tick::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 1px;
+      height: 4px;
+      background: #475569;
+    }
+
+    .timeline-live-summary {
+      margin-top: 8px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    /* ================= PYTHON CODE EDITOR BOX ================= */
+    .code-container-single {
+      background: #090e18;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 18px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: #e2e8f0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+      white-space: normal;
+    }
+
+    .py-comm { color: #64748b; font-style: italic; }
+    .py-kw { color: #818cf8; font-weight: 700; }
+    .py-fn { color: #34d399; font-weight: 700; }
+    .py-var { color: #f8fafc; }
+    .py-str { color: #fde68a; }
+    .py-num { color: #fb923c; }
+
+    /* Math Proof Cards */
+    .proof-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+    }
+
+    .proof-card-title {
+      font-weight: 700;
+      font-size: 0.98rem;
+      color: #a5b4fc;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .math-symbol {
+      font-family: "Cambria Math", "Times New Roman", serif;
+      font-style: italic;
+      color: var(--cyan-light);
+      font-weight: 600;
+    }
+
+    /* Callouts */
+    .info-callout {
+      background: rgba(6, 182, 212, 0.08);
+      border-left: 3px solid var(--cyan);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 8px 14px;
+      font-size: 0.92rem;
+      color: #e0f2fe;
+    }
+
+    .warning-callout {
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 3px solid var(--amber);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 8px 14px;
+      font-size: 0.92rem;
+      color: #fef3c7;
+    }
+
+    .success-callout {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid var(--emerald);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 8px 14px;
+      font-size: 0.92rem;
+      color: #d1fae5;
+    }
+
+    /* Pinned Bottom Notes */
+    .slide-note-bottom {
+      margin-top: auto !important;
+      margin-bottom: 4px !important;
+      flex-shrink: 0;
+    }
+
+    /* ================= COMPACT BOTTOM CONTROL BAR ================= */
+    .deck-footer {
+      height: 48px;
+      background: #0b1120;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 90;
+      flex-shrink: 0;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Bottom Left: Slide Counter */
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slide-badge-bottom-left {
+      background: rgba(99, 102, 241, 0.16);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: var(--primary-light);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 5px;
+    }
+
+    .dots-strip {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .nav-pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #334155;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-pip.active {
+      background: var(--cyan);
+      width: 16px;
+      border-radius: 999px;
+    }
+
+    /* Bottom Right: Compact Slide Navigation Buttons Side-by-Side */
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-slide-nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      outline: none;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .btn-slide-nav:active {
+      transform: scale(0.97);
+    }
+
+    .btn-slide-prev {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+
+    .btn-slide-prev:hover:not(:disabled) {
+      background: #28374d;
+      color: #ffffff;
+      border-color: #475569;
+    }
+
+    .btn-slide-next {
+      background: linear-gradient(135deg, #4f46e5, #4338ca);
+      color: #ffffff;
+      box-shadow: 0 1px 6px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-slide-next:hover:not(:disabled) {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-slide-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .btn-fs {
+      background: #141d2e;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .btn-fs:hover {
+      background: #1e293b;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Accent Progress Bar -->
+  <div class="top-progress-accent">
+    <div class="top-progress-fill" id="topProgressFill"></div>
+  </div>
+
+  <!-- FIXED VIEWPORT -->
+  <div class="deck-viewport" id="viewport">
+
+    <!-- ================= SLIDE 1: Title Slide ================= -->
+    <section class="slide-frame active" id="slide-0" style="justify-content: center; align-items: center; text-align: center;">
+      <h1 style="font-size: 3.4rem; font-weight: 800; letter-spacing: -0.03em; color: var(--text-white); line-height: 1.2;">
+        Tracing the Activity Selection
+      </h1>
+    </section>
+
+    <!-- ================= SLIDE 2: Problem Statement & Motivating Example ================= -->
+    <section class="slide-frame" id="slide-1">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          <span class="tag">Context</span>
+          The Problem Statement
+        </div>
+      </div>
+
+      <div class="present-card">
+        <p class="body-primary-text">
+          Given <span class="key-term">n activities</span> with their start and finish times. 
+          <br>Select the <span class="accent-cyan-text">maximum number of activities</span> that can be performed by a single person, assuming, that a person can only work on a <span class="key-term">single activity at a time</span>.
+        </p>
+      </div>
+
+      <!-- Table Card with In-Table Step Buttons -->
+      <div class="present-card">
+        <div class="card-header-row">
+          <div class="card-title-text">
+            Example:
+          </div>
+          <!-- In-table previous and next buttons -->
+          <div class="table-step-controls">
+            <button class="btn-tbl" id="btn-s2-prev" onclick="stepExampleTable(-1)" disabled title="Previous Table Step">
+              ◀ Prev
+            </button>
+            <span class="table-step-badge" id="s2-step-indicator">Step 1 / 2</span>
+            <button class="btn-tbl btn-tbl-primary" id="btn-s2-next" onclick="stepExampleTable(1)" title="Next Table Step">
+              Next Step ▶
+            </button>
+          </div>
+        </div>
+
+        <table class="present-table" id="s2-table">
+          <thead>
+            <tr>
+              <th style="width: 140px;">Activity</th>
+              <th>A1</th>
+              <th>A2</th>
+              <th>A3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 800; color: #94a3b8;">Start</td>
+              <td id="s2-a1-s">12</td>
+              <td id="s2-a2-s">10</td>
+              <td id="s2-a3-s">20</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 800; color: #94a3b8;">Finish</td>
+              <td id="s2-a1-f">25</td>
+              <td id="s2-a2-f">20</td>
+              <td id="s2-a3-f">30</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Revealed outcome on Table Step click -->
+        <div id="s2-outcome-box" style="display: none; margin-top: 10px;">
+          <div class="success-callout">
+            <div style="font-size: 1rem; font-weight: 800; color: var(--emerald-light); margin-bottom: 3px;">
+              Total activities performed: A2, A3: 2 activities
+            </div>
+            <div style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">
+              • A2 runs from 10 to 20 (finish = 20)<br>
+              • A3 starts at 20 (compatible: 20 &ge; 20) and finishes at 30<br>
+              • A1 runs from 12 to 25, creating a collision with both A2 and A3!
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 3: Method: Solution; Greedy Approach ================= -->
+    <section class="slide-frame" id="slide-2">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          <span class="tag">Method</span>
+          Solution; Greedy Approach
+        </div>
+      </div>
+
+      <!-- Vertical steps flow -->
+      <div class="greedy-steps-vertical">
+        <div class="present-card step-card-row" style="border-left: 4px solid var(--cyan);">
+          <div class="step-num-circle" style="background: rgba(6, 182, 212, 0.2); color: var(--cyan);">1</div>
+          <div class="step-text-wrap">
+            <strong class="step-title-bold">SORT all activities by finish time</strong>
+            <p class="step-desc-text">Order activities in non-decreasing (ascending) order of their finish times.</p>
+          </div>
+        </div>
+
+        <div class="present-card step-card-row" style="border-left: 4px solid var(--emerald);">
+          <div class="step-num-circle" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald);">2</div>
+          <div class="step-text-wrap">
+            <strong class="step-title-bold">SELECT the first activity, set last_finish to its finish time.</strong>
+          </div>
+        </div>
+
+        <div class="present-card step-card-row" style="border-left: 4px solid var(--primary-light);">
+          <div class="step-num-circle" style="background: rgba(99, 102, 241, 0.2); color: var(--primary-light);">3</div>
+          <div class="step-text-wrap">
+            <strong class="step-title-bold">GO DOWN THE LIST: ask: is start &ge; last_finish?</strong>
+            <p class="step-desc-text">
+              • <span class="accent-emerald-text">Yes:</span> select it, and update <code style="color: var(--cyan);">last_finish</code> to its finish time<br>
+              • <span class="accent-rose-text">No:</span> skip it, <code style="color: var(--cyan);">last_finish</code> stays the same
+            </p>
+          </div>
+        </div>
+
+        <div class="present-card step-card-row" style="border-left: 4px solid var(--amber);">
+          <div class="step-num-circle" style="background: rgba(245, 158, 11, 0.2); color: var(--amber);">4</div>
+          <div class="step-text-wrap">
+            <strong class="step-title-bold">Stop at the end of the list and the selected activities are the answer.</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note at bottom just above navigation -->
+      <div class="warning-callout slide-note-bottom">
+        <strong style="color: var(--amber-light);">Note:</strong> If the start time of the activity is greater than or equal to the finish time of previously selected activity, then select this activity and print it.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 4: Step 1 - SORT all activities (Editable Inputs & Live Dynamic Updates) ================= -->
+    <section class="slide-frame" id="slide-3">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          1. SORT all activities by finish time
+        </div>
+      </div>
+
+      <!-- TABLE 1: Unsorted Input Table (Editable) -->
+      <div class="present-card" style="margin-top: 8px; margin-bottom: 10px; padding: 10px 14px;">
+        <div class="card-header-row" style="margin-bottom: 6px;">
+          <div class="card-title-text" style="font-size: 0.95rem;">
+            ACTIVITY Input List (Unsorted)
+          </div>
+          <!-- In-table controls: Reset to original + Sort button -->
+          <div class="table-step-controls">
+            <button class="btn-tbl btn-tbl-reset" id="btn-s3-reset" onclick="resetStep1ToDefaults()" title="Reset to original default values">
+              Reset Default
+            </button>
+            <button class="btn-tbl btn-tbl-primary" id="btn-s3-sort" onclick="sortStep1Activities()" title="Sort activities by finish time">
+              Sort Activities ▶
+            </button>
+          </div>
+        </div>
+
+        <table class="present-table" id="s3-unsorted-table">
+          <thead>
+            <tr>
+              <th style="width: 130px;">ACTIVITY</th>
+              <th>A1</th>
+              <th>A2</th>
+              <th>A3</th>
+              <th>A4</th>
+              <th>A5</th>
+              <th>A6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight: 800; color: #94a3b8;">Start</td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-start-0" value="0" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-start-1" value="3" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-start-2" value="1" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-start-3" value="5" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-start-4" value="5" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-start-5" value="8" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+            </tr>
+            <tr>
+              <td style="font-weight: 800; color: #94a3b8;">Finish</td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-finish-0" value="6" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-finish-1" value="4" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-finish-2" value="2" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-finish-3" value="9" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-finish-4" value="7" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+              <td><input type="number" min="0" max="99" class="time-input" id="inp-finish-5" value="9" onchange="onStep1InputChange()" oninput="onStep1InputChange()"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABLE 2: Sorted Table (Shows below Table 1 when Sort button is clicked) -->
+      <div class="present-card" id="s3-sorted-card" style="display: none; margin-bottom: 8px; padding: 10px 14px; border-left: 3px solid var(--emerald); animation: fadeIn 0.25s ease-out;">
+        <div class="card-header-row" style="margin-bottom: 6px;">
+          <div class="card-title-text" style="font-size: 0.95rem; color: var(--emerald-light);">
+            ACTIVITY List Sorted by Finish Time
+          </div>
+          <span class="table-step-badge" id="s3-sorted-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-light); border-color: rgba(16, 185, 129, 0.4);">
+            Sorted Order
+          </span>
+        </div>
+
+        <table class="present-table" id="s3-sorted-table">
+          <thead>
+            <tr id="s3-sorted-head-row">
+              <th style="width: 130px;">ACTIVITY</th>
+              <th id="s3-sort-act-0">A3</th>
+              <th id="s3-sort-act-1">A2</th>
+              <th id="s3-sort-act-2">A1</th>
+              <th id="s3-sort-act-3">A5</th>
+              <th id="s3-sort-act-4">A6</th>
+              <th id="s3-sort-act-5">A4</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="s3-sorted-start-row">
+              <td style="font-weight: 800; color: #94a3b8;">Start</td>
+              <td id="s3-sort-start-0">1</td>
+              <td id="s3-sort-start-1">3</td>
+              <td id="s3-sort-start-2">0</td>
+              <td id="s3-sort-start-3">5</td>
+              <td id="s3-sort-start-4">8</td>
+              <td id="s3-sort-start-5">5</td>
+            </tr>
+            <tr id="s3-sorted-finish-row">
+              <td style="font-weight: 800; color: #94a3b8;">Finish</td>
+              <td id="s3-sort-finish-0" class="cell-highlight">2</td>
+              <td id="s3-sort-finish-1" class="cell-highlight">4</td>
+              <td id="s3-sort-finish-2" class="cell-highlight">6</td>
+              <td id="s3-sort-finish-3" class="cell-highlight">7</td>
+              <td id="s3-sort-finish-4" class="cell-highlight">9</td>
+              <td id="s3-sort-finish-5" class="cell-highlight">9</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 5: Step 2 & 3 - Interactive Tracing & Right Timeline Comparison (Uses dynamic sorted data) ================= -->
+    <section class="slide-frame" id="slide-4">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          2. SELECT first activity & 3. GO DOWN THE LIST
+        </div>
+        <div class="slide-lead-text">
+        <b>Ask:</b> is start &ge; last_finish? <b>Yes</b>: select, <b>No</b>: skip.
+        </div>
+      </div>
+
+      <!-- Sorted Bar Reference (Dynamically populated from Step 1) -->
+      <div style="background: #090e1a; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; flex-shrink: 0;">
+        <span style="color: var(--text-white); font-weight: 800; letter-spacing: 0.04em;">SORTED ACTIVITIES:</span>
+        <div id="slide4-sorted-bar" style="display: flex; gap: 12px; font-family: var(--font-mono); font-weight: 800;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Split Layout: Table on Left, Timeline on Right -->
+      <div class="tracing-split-grid">
+
+        <!-- Left: Tracing Table with In-Table Previous, Next & RESET BUTTON -->
+        <div style="display: flex; flex-direction: column; min-height: 0;">
+          <div class="present-card" style="margin-bottom: 8px; padding: 10px 14px;">
+            <div class="card-header-row" style="margin-bottom: 8px;">
+              <div class="card-title-text" style="font-size: 0.98rem;">
+                Tracing Table
+              </div>
+              <!-- IN-TABLE BUTTONS INCLUDING RESET BUTTON -->
+              <div class="table-step-controls">
+                <button class="btn-tbl btn-tbl-reset" id="btn-trace-reset" onclick="resetTracingTable()" title="Reset Tracing Table (Key: R)">
+                  Reset
+                </button>
+                <button class="btn-tbl" id="btn-trace-prev" onclick="stepTracingTable(-1)" disabled title="Previous Table Step (Key: ↑ or W)">
+                  ◀ Prev
+                </button>
+                <span class="table-step-badge" id="trace-step-indicator">Step 0 / 5</span>
+                <button class="btn-tbl btn-tbl-primary" id="btn-trace-next" onclick="stepTracingTable(1)" title="Next Table Step (Key: ↓ or S)">
+                  Next ▶
+                </button>
+              </div>
+            </div>
+
+            <table class="present-table trace-rows-table" id="tracingMainTable">
+              <thead>
+                <tr>
+                  <th style="width: 44px;">Step</th>
+                  <th>Activity (start / finish)</th>
+                  <th>Check</th>
+                  <th>Decision</th>
+                  <th>last_finish</th>
+                </tr>
+              </thead>
+              <tbody id="traceTableBodyDynamic">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Final Summary Banner on Completion -->
+          <div id="trace-completion-card" style="display: none;">
+            <div class="success-callout" style="padding: 6px 12px;">
+              <strong style="color: var(--emerald-light); font-size: 0.88rem;">
+                4. Stop at the end of the list and the selected activities are the answer.
+              </strong>
+              <div id="traceSummaryText" style="font-size: 0.82rem; color: #cbd5e1; margin-top: 2px;">
+                <!-- Dynamically generated summary -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Timeline Comparison (Dynamically synced) -->
+        <div class="timeline-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div class="card-title-text" style="font-size: 0.94rem;">
+              Timeline Comparison
+            </div>
+            <div style="display: flex; gap: 10px; font-size: 0.74rem; font-weight: 700; color: var(--text-muted);">
+              <span><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--emerald);"></span> Selected</span>
+              <span><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--rose);"></span> Skip</span>
+              <span><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #334155;"></span> Pending</span>
+            </div>
+          </div>
+
+          <!-- Visual Timeline Graphic -->
+          <div class="timeline-plot">
+            <!-- Grid Lines -->
+            <div class="timeline-grid-lines" id="timelineGridLines">
+              <!-- Dynamically rendered -->
+            </div>
+
+            <!-- Dynamic Marker for last_finish -->
+            <div class="marker-last-finish" id="timelineMarker" style="left: calc(65px + (100% - 79px) * 0.2);" data-val="2"></div>
+
+            <!-- Activity Rows -->
+            <div class="plot-activity-rows" id="timelineActivityRows">
+              <!-- Dynamically populated rows -->
+            </div>
+
+            <!-- Time Axis Ticks -->
+            <div class="plot-time-axis" id="timelineTimeAxis">
+              <!-- Dynamically populated ticks -->
+            </div>
+          </div>
+
+          <!-- Active Schedule Sequence Track -->
+          <div class="timeline-live-summary">
+            <div style="display: flex; justify-content: space-between; font-size: 0.76rem; font-weight: 800; color: var(--emerald-light); text-transform: uppercase; margin-bottom: 4px;">
+              <span>Selected Activities Schedule</span>
+              <span id="liveStatusExplanation" style="text-transform: none; color: #cbd5e1; font-weight: 500;">Step 0</span>
+            </div>
+            <div id="liveSelectedTokens" style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <!-- Dynamically populated tokens -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 6: Python Code Implementation (Formatted with visual structure) ================= -->
+    <section class="slide-frame" id="slide-5">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          <span class="tag">Implementation</span>
+          Python Implementation
+        </div>
+      </div>
+
+      <div class="code-container-single">
+        <span class="py-kw">def</span> <span class="py-fn">print_max_activities</span>(<span class="py-var">s</span>, <span class="py-var">f</span>, <span class="py-var">n</span>):
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-comm"># s[] = start times,</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-comm"># f[] = finish times (already sorted by finish time)</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-fn">print</span>(<span class="py-str">"Following activities are selected"</span>)
+            <br>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-comm"># The first activity always gets selected</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-var">i</span> = <span class="py-num">0</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-fn">print</span>(<span class="py-var">i</span>, <span class="py-var">end</span>=<span class="py-str">" "</span>)
+            <br>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-comm"># Consider the rest of the activities</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-kw">for</span> <span class="py-var">j</span> <span class="py-kw">in</span> <span class="py-fn">range</span>(<span class="py-num">1</span>, <span class="py-var">n</span>):
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-comm"># If this activity starts at or after the last selected one finishes, select it</span>
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-kw">if</span> <span class="py-var">s</span>[<span class="py-var">j</span>] &gt;= <span class="py-var">f</span>[<span class="py-var">i</span>]:
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-fn">print</span>(<span class="py-var">j</span>, <span class="py-var">end</span>=<span class="py-str">" "</span>)
+            <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="py-var">i</span> = <span class="py-var">j</span>
+            <br>
+            <br>
+        <span class="py-comm"># Your sorted data from the slides: A3, A2, A1, A5, A6, A4</span>
+        <br><span class="py-var">s</span> = [<span class="py-num">1</span>, <span class="py-num">3</span>, <span class="py-num">0</span>, <span class="py-num">5</span>, <span class="py-num">8</span>, <span class="py-num">5</span>]
+        <br><span class="py-var">f</span> = [<span class="py-num">2</span>, <span class="py-num">4</span>, <span class="py-num">6</span>, <span class="py-num">7</span>, <span class="py-num">9</span>, <span class="py-num">9</span>]
+        <br><span class="py-fn">print_max_activities</span>(<span class="py-var">s</span>, <span class="py-var">f</span>, <span class="py-fn">len</span>(<span class="py-var">s</span>))
+      </div>
+
+      <!-- Note at bottom just above navigation -->
+      <div class="warning-callout slide-note-bottom">
+        <strong style="color: var(--amber-light);">Note:</strong> The code snippet assumes that the arrays are sorted.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 7: Proof Roadmap ================= -->
+    <section class="slide-frame" id="slide-6">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          <span class="tag">Proof</span>
+          Evidence / Proof: Greedy Stays Ahead
+        </div>
+        <div class="slide-lead-text">
+          Establishing why the Greedy algorithm is mathematically guaranteed to be optimal.
+        </div>
+      </div>
+
+      <div class="present-card" style="border-left: 3px solid var(--cyan); margin-bottom: 14px; padding: 14px 18px;">
+        <div class="card-title-text" style="font-size: 1.08rem; margin-bottom: 6px;">
+          The Core Invariant
+        </div>
+        <p class="body-primary-text" style="font-size: 1.15rem; color: #f8fafc; line-height: 1.55;">
+          "The <span class="math-symbol">k</span>-th activity picked by the greedy algorithm finishes no later than the <span class="math-symbol">k</span>-th activity in any other valid schedule."
+        </p>
+      </div>
+
+      <p class="body-primary-text" style="font-size: 1.02rem; color: #cbd5e1; margin-bottom: 12px;">
+        We need to show two things:
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="proof-card" style="border-top: 3px solid var(--primary); padding: 14px 18px;">
+          <div class="proof-card-title">
+            <span style="background: rgba(99, 102, 241, 0.2); color: var(--primary-light); padding: 2px 8px; border-radius: 4px; font-size: 0.82rem;">1</span>
+            The Lemma
+          </div>
+          <p class="body-primary-text" style="font-size: 0.94rem; line-height: 1.5;">
+            This statement is true: greedy is never behind any valid schedule at any position.
+          </p>
+        </div>
+
+        <div class="proof-card" style="border-top: 3px solid var(--emerald); padding: 14px 18px;">
+          <div class="proof-card-title">
+            <span style="background: rgba(16, 185, 129, 0.2); color: var(--emerald-light); padding: 2px 8px; border-radius: 4px; font-size: 0.82rem;">2</span>
+            The Theorem
+          </div>
+          <p class="body-primary-text" style="font-size: 0.94rem; line-height: 1.5;">
+            If it's true, the greedy algorithm must be optimal (no schedule can contain more activities).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 8: Notation & Setup ================= -->
+    <section class="slide-frame" id="slide-7">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          Evidence / Proof: Greedy Stays Ahead
+        </div>
+        <div class="slide-lead-text">
+          Notation definitions used across the induction and contradiction proofs.
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+        <div class="present-card" style="margin: 0; padding: 10px 14px;">
+          <div style="font-family: var(--font-mono); font-size: 1.15rem; color: var(--cyan); font-weight: 800; margin-bottom: 3px;">
+            S
+          </div>
+          <p class="body-primary-text" style="font-size: 0.9rem;">
+            The schedule produced by the greedy algorithm.
+          </p>
+        </div>
+
+        <div class="present-card" style="margin: 0; padding: 10px 14px;">
+          <div style="font-family: var(--font-mono); font-size: 1.15rem; color: var(--emerald-light); font-weight: 800; margin-bottom: 3px;">
+            S*
+          </div>
+          <p class="body-primary-text" style="font-size: 0.9rem;">
+            An optimal (best possible) schedule.
+          </p>
+        </div>
+
+        <div class="present-card" style="margin: 0; padding: 10px 14px;">
+          <div style="font-family: var(--font-mono); font-size: 1.15rem; color: #f8fafc; font-weight: 800; margin-bottom: 3px;">
+            |S| and |S*|
+          </div>
+          <p class="body-primary-text" style="font-size: 0.9rem;">
+            The number of activities in <span class="math-symbol">S</span>. Likewise, <span class="math-symbol">|S*|</span> is the number in <span class="math-symbol">S*</span>.
+          </p>
+        </div>
+
+        <div class="present-card" style="margin: 0; padding: 10px 14px;">
+          <div style="font-family: var(--font-mono); font-size: 1.15rem; color: var(--amber-light); font-weight: 800; margin-bottom: 3px;">
+            f(i, S)
+          </div>
+          <p class="body-primary-text" style="font-size: 0.9rem;">
+            The finish time of the <span class="math-symbol">i</span>-th activity in schedule <span class="math-symbol">S</span>.
+          </p>
+        </div>
+
+        <div class="present-card" style="margin: 0; padding: 10px 14px; grid-column: span 2;">
+          <div style="font-family: var(--font-mono); font-size: 1.15rem; color: #c084fc; font-weight: 800; margin-bottom: 3px;">
+            U
+          </div>
+          <p class="body-primary-text" style="font-size: 0.9rem;">
+            The set of activities still available to pick, meaning those that don't overlap anything already chosen.
+          </p>
+        </div>
+      </div>
+
+      <div class="info-callout" style="margin-top: 10px; font-size: 0.96rem;">
+        Since <span class="math-symbol">S*</span> is the best possible, <strong style="color: #ffffff;">|S| &le; |S*|</strong>. We still need to show <strong style="color: var(--cyan);">|S| &ge; |S*|</strong>.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 9: Lemma: greedy is never behind ================= -->
+    <section class="slide-frame" id="slide-8">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          Lemma: greedy is never behind
+        </div>
+        <div class="slide-lead-text">
+          Proof by induction that greedy's picks finish no later than optimal picks.
+        </div>
+      </div>
+
+      <div class="present-card" style="background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.35); margin-bottom: 10px; padding: 10px 14px;">
+        <div style="font-weight: 800; font-size: 1.05rem; color: #c7d2fe; margin-bottom: 2px;">
+          Claim: For every position 1 &le; i &le; |S|, f(i, S) &le; f(i, S*)
+        </div>
+        <p class="body-primary-text" style="font-size: 0.92rem;">
+          The <span class="math-symbol">i</span>-th activity of greedy finishes no later than the <span class="math-symbol">i</span>-th activity of the optimal schedule.
+        </p>
+      </div>
+
+      <div class="proof-card" style="padding: 10px 14px;">
+        <div class="proof-card-title">
+          Base case (i = 1):
+        </div>
+        <p class="body-primary-text" style="font-size: 0.92rem; line-height: 1.5;">
+          Greedy's first pick is the activity that finishes earliest of all, so it can't finish later than the first activity of <span class="math-symbol">S*</span>.<br>
+          Therefore: <strong style="color: var(--emerald-light);">f(1, S) &le; f(1, S*)</strong>.
+        </p>
+      </div>
+
+      <div class="proof-card" style="padding: 10px 14px;">
+        <div class="proof-card-title">
+          Inductive step:
+        </div>
+        <div class="body-primary-text" style="font-size: 0.92rem; line-height: 1.55;">
+          • Assume the claim is true for some position <span class="math-symbol">i &lt; |S|</span>, so greedy's <span class="math-symbol">i</span>-th activity ends no later than <span class="math-symbol">S*</span>'s <span class="math-symbol">i</span>-th activity.<br>
+          • <span class="math-symbol">S*</span>'s <span class="math-symbol">(i+1)</span>-th activity starts at or after <span class="math-symbol">S*</span>'s <span class="math-symbol">i</span>-th activity ends.<br>
+          • That means it also starts at or after greedy's <span class="math-symbol">i</span>-th activity ends.<br>
+          • So <span class="math-symbol">S*</span>'s <span class="math-symbol">(i+1)</span>-th activity is still in <span class="math-symbol">U</span> when greedy makes its <span class="math-symbol">(i+1)</span>-th pick.<br>
+          • Greedy picks the activity in <span class="math-symbol">U</span> that finishes earliest, so <strong style="color: var(--cyan); font-size: 1rem;">f(i+1, S) &le; f(i+1, S*)</strong>. ■
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 10: Theorem: greedy is optimal ================= -->
+    <section class="slide-frame" id="slide-9">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          Theorem: greedy is optimal
+        </div>
+        <div class="slide-lead-text">
+          Proof by contradiction that greedy produces an optimal schedule.
+        </div>
+      </div>
+
+      <div class="present-card" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); margin-bottom: 10px; padding: 10px 14px;">
+        <div style="font-weight: 800; font-size: 1.05rem; color: var(--emerald-light);">
+          Claim: The greedy algorithm produces an optimal schedule (|S| = |S*|)
+        </div>
+      </div>
+
+      <div class="proof-card" style="padding: 12px 16px;">
+        <div class="proof-card-title">
+          Proof (by contradiction):
+        </div>
+        <div class="body-primary-text" style="font-size: 0.92rem; line-height: 1.6;">
+          1. We already know <span class="math-symbol">|S| &le; |S*|</span>. We need to prove <span class="math-symbol">|S| &ge; |S*|</span>.<br>
+          2. Suppose instead that <strong style="color: var(--rose-light);">|S| &lt; |S*|</strong>, and let <strong style="color: #ffffff;">k = |S|</strong>.<br>
+          3. By the Lemma, <strong style="color: var(--cyan);">f(k, S) &le; f(k, S*)</strong>.<br>
+          4. Since <span class="math-symbol">S*</span> has more than <span class="math-symbol">k</span> activities, it has a <span class="math-symbol">(k+1)</span>-th activity.<br>
+          5. That activity starts at or after <span class="math-symbol">f(k, S*)</span>, and so at or after <span class="math-symbol">f(k, S)</span>.<br>
+          6. So, after greedy picked its <span class="math-symbol">k</span>-th activity, the <span class="math-symbol">(k+1)</span>-th activity of <span class="math-symbol">S*</span> was still in <span class="math-symbol">U</span>.<br>
+          7. But greedy stopped after <span class="math-symbol">k</span> activities, which <strong style="color: var(--amber-light);">only happens when U is empty</strong>.<br><br>
+          <div style="background: rgba(244, 63, 94, 0.16); border: 1px solid rgba(244, 63, 94, 0.4); border-radius: var(--radius-sm); padding: 8px 12px; color: #fecdd3; font-size: 0.95rem;">
+            This is a contradiction! So the assumption was wrong. Therefore <strong style="color: #ffffff;">|S| &ge; |S*|</strong>, and greedy is optimal. ■
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 11: Sources & References ================= -->
+    <section class="slide-frame" id="slide-10">
+      <div class="slide-hero-header">
+        <div class="slide-hero-title">
+          Sources:
+        </div>
+        <div class="slide-lead-text">
+          External resources and lecture citations.
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="present-card" style="margin: 0; padding: 12px 16px;">
+          <div style="font-weight: 700; font-size: 0.98rem; color: #ffffff; margin-bottom: 4px;">
+            YouTube Video Walkthrough
+          </div>
+          <a href="https://www.youtube.com/watch?v=poWB2UCuozA" target="_blank" rel="noopener noreferrer" style="color: var(--cyan); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            https://www.youtube.com/watch?v=poWB2UCuozA ↗
+          </a>
+        </div>
+
+        <div class="present-card" style="margin: 0; padding: 12px 16px;">
+          <div style="font-weight: 700; font-size: 0.98rem; color: #ffffff; margin-bottom: 4px;">
+            Northeastern University Course Notes
+          </div>
+          <a href="https://www.ccs.neu.edu/home/vip/teach/Algorithms/5_greedy/notes/Small13.pdf" target="_blank" rel="noopener noreferrer" style="color: var(--cyan); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            https://www.ccs.neu.edu/home/vip/teach/Algorithms/5_greedy/notes/Small13.pdf ↗
+          </a>
+        </div>
+
+        <div class="present-card" style="margin: 0; padding: 12px 16px;">
+          <div style="font-weight: 700; font-size: 0.98rem; color: #ffffff; margin-bottom: 4px;">
+            InterviewBit Guide
+          </div>
+          <a href="https://www.interviewbit.com/courses/programming/greedy-algorithm/activity-selection-problem/" target="_blank" rel="noopener noreferrer" style="color: var(--cyan); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            https://www.interviewbit.com/courses/programming/greedy-algorithm/activity-selection-problem/ ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ================= COMPACT BOTTOM PRESENTATION CONTROL BAR ================= -->
+  <footer class="deck-footer">
+    <!-- Bottom Left: Slide Counter -->
+    <div class="footer-left">
+      <div class="slide-badge-bottom-left" id="bottomLeftSlideCounter">
+        Slide 1 / 11
+      </div>
+      <div class="dots-strip" id="dotsStrip"></div>
+    </div>
+
+    <!-- Bottom Right: Compact Slide Navigation Buttons Side-by-Side -->
+    <div class="footer-right">
+      <button class="btn-slide-nav btn-slide-prev" id="btnSlidePrev" onclick="proceedPrevSlide()" title="Previous Slide (Arrow Left)">
+        <span>◀</span> Prev Slide
+      </button>
+
+      <button class="btn-slide-nav btn-slide-next" id="btnSlideNext" onclick="proceedNextSlide()" title="Next Slide (Arrow Right or Space)">
+        <span id="btnSlideNextLabel">Next Slide</span> <span>▶</span>
+      </button>
+
+      <button class="btn-fs" onclick="togglePresentationFullscreen()" title="Toggle Fullscreen (F)">
+        ⛶
+      </button>
+    </div>
+  </footer>
+
+  <!-- SCRIPT -->
+  <script>
+    const TOTAL_SLIDES = 11;
+    let activeSlideIndex = 0;
+
+    // Per-slide in-table states
+    // Slide 1 (Index 1): Example Table (2 steps: 0, 1)
+    let s2Step = 0;
+    const s2Max = 1;
+
+    // Slide 3 (Index 3): Single Dynamic Sorting Table (2 steps: 0, 1)
+    let s3Step = 0;
+    const s3Max = 1;
+
+    // Default Activities dataset
+    const DEFAULT_ACTIVITIES = [
+      { id: "A1", start: 0, finish: 6 },
+      { id: "A2", start: 3, finish: 4 },
+      { id: "A3", start: 1, finish: 2 },
+      { id: "A4", start: 5, finish: 9 },
+      { id: "A5", start: 5, finish: 7 },
+      { id: "A6", start: 8, finish: 9 }
+    ];
+
+    // Current working activities in Step 1
+    let currentActivities = JSON.parse(JSON.stringify(DEFAULT_ACTIVITIES));
+    let sortedActivities = [];
+
+    // Tracing states for Slide 5
+    let traceStep = 0;
+    let traceMax = 5;
+    let traceData = [];
+
+    function initDeck() {
+      createDots();
+      populateStep1Inputs();
+      computeSortedAndTracingData();
+      displaySlide(0);
+      setupKeyListeners();
+    }
+
+    function createDots() {
+      const strip = document.getElementById('dotsStrip');
+      strip.innerHTML = '';
+      for (let i = 0; i < TOTAL_SLIDES; i++) {
+        const dot = document.createElement('div');
+        dot.className = `nav-pip ${i === 0 ? 'active' : ''}`;
+        dot.title = `Slide ${i + 1}`;
+        dot.onclick = () => displaySlide(i);
+        strip.appendChild(dot);
+      }
+    }
+
+    function displaySlide(idx) {
+      if (idx < 0 || idx >= TOTAL_SLIDES) return;
+      activeSlideIndex = idx;
+
+      const frames = document.querySelectorAll('.slide-frame');
+      frames.forEach((f, i) => {
+        if (i === activeSlideIndex) {
+          f.classList.add('active');
+        } else {
+          f.classList.remove('active');
+        }
+      });
+
+      // Bottom left slide counter update
+      document.getElementById('bottomLeftSlideCounter').textContent = `Slide ${activeSlideIndex + 1} / ${TOTAL_SLIDES}`;
+
+      // Top progress accent bar
+      const pct = ((activeSlideIndex + 1) / TOTAL_SLIDES) * 100;
+      document.getElementById('topProgressFill').style.width = `${pct}%`;
+
+      // Update dots
+      const dots = document.querySelectorAll('.nav-pip');
+      dots.forEach((d, i) => {
+        if (i === activeSlideIndex) d.classList.add('active');
+        else d.classList.remove('active');
+      });
+
+      // General Buttons
+      document.getElementById('btnSlidePrev').disabled = (activeSlideIndex === 0);
+      const nextBtn = document.getElementById('btnSlideNext');
+      const nextLabel = document.getElementById('btnSlideNextLabel');
+      if (activeSlideIndex === TOTAL_SLIDES - 1) {
+        nextLabel.textContent = "Finished";
+        nextBtn.disabled = true;
+      } else {
+        nextLabel.textContent = "Next Slide";
+        nextBtn.disabled = false;
+      }
+    }
+
+    function proceedNextSlide() {
+      if (activeSlideIndex < TOTAL_SLIDES - 1) {
+        displaySlide(activeSlideIndex + 1);
+      }
+    }
+
+    function proceedPrevSlide() {
+      if (activeSlideIndex > 0) {
+        displaySlide(activeSlideIndex - 1);
+      }
+    }
+
+    // ================= SLIDE 2: EXAMPLE TABLE =================
+    function stepExampleTable(delta) {
+      s2Step = Math.max(0, Math.min(s2Max, s2Step + delta));
+
+      const outcomeBox = document.getElementById('s2-outcome-box');
+      const prevBtn = document.getElementById('btn-s2-prev');
+      const nextBtn = document.getElementById('btn-s2-next');
+      const indicator = document.getElementById('s2-step-indicator');
+
+      if (s2Step === 1) {
+        outcomeBox.style.display = 'block';
+        document.getElementById('s2-a2-s').classList.add('cell-selected');
+        document.getElementById('s2-a2-f').classList.add('cell-selected');
+        document.getElementById('s2-a3-s').classList.add('cell-selected');
+        document.getElementById('s2-a3-f').classList.add('cell-selected');
+        document.getElementById('s2-a1-s').classList.add('cell-skipped');
+        document.getElementById('s2-a1-f').classList.add('cell-skipped');
+        indicator.textContent = "Step 2 / 2";
+      } else {
+        outcomeBox.style.display = 'none';
+        document.getElementById('s2-a2-s').classList.remove('cell-selected');
+        document.getElementById('s2-a2-f').classList.remove('cell-selected');
+        document.getElementById('s2-a3-s').classList.remove('cell-selected');
+        document.getElementById('s2-a3-f').classList.remove('cell-selected');
+        document.getElementById('s2-a1-s').classList.remove('cell-skipped');
+        document.getElementById('s2-a1-f').classList.remove('cell-skipped');
+        indicator.textContent = "Step 1 / 2";
+      }
+
+      prevBtn.disabled = (s2Step === 0);
+      nextBtn.disabled = (s2Step === s2Max);
+    }
+
+    // ================= SLIDE 4: STEP 1 DYNAMIC SORTING TABLE (TWO TABLES) =================
+    let s3SortedVisible = false;
+
+    function populateStep1Inputs() {
+      for (let i = 0; i < currentActivities.length; i++) {
+        const sEl = document.getElementById(`inp-start-${i}`);
+        const fEl = document.getElementById(`inp-finish-${i}`);
+        if (sEl) sEl.value = currentActivities[i].start;
+        if (fEl) fEl.value = currentActivities[i].finish;
+      }
+    }
+
+    function onStep1InputChange() {
+      for (let i = 0; i < currentActivities.length; i++) {
+        const sEl = document.getElementById(`inp-start-${i}`);
+        const fEl = document.getElementById(`inp-finish-${i}`);
+        if (!sEl || !fEl) continue;
+        const sVal = parseInt(sEl.value, 10);
+        const fVal = parseInt(fEl.value, 10);
+        currentActivities[i].start = isNaN(sVal) ? 0 : Math.max(0, sVal);
+        currentActivities[i].finish = isNaN(fVal) ? currentActivities[i].start : Math.max(0, fVal);
+      }
+      computeSortedAndTracingData();
+      if (s3SortedVisible) {
+        renderSortedTableData();
+      }
+    }
+
+    function renderSortedTableData() {
+      for (let i = 0; i < sortedActivities.length; i++) {
+        const actEl = document.getElementById(`s3-sort-act-${i}`);
+        const startEl = document.getElementById(`s3-sort-start-${i}`);
+        const finishEl = document.getElementById(`s3-sort-finish-${i}`);
+        if (actEl) actEl.textContent = sortedActivities[i].id;
+        if (startEl) startEl.textContent = sortedActivities[i].start;
+        if (finishEl) finishEl.textContent = sortedActivities[i].finish;
+      }
+      const expEl = document.getElementById('s3-sorted-explanation');
+      if (expEl) {
+        expEl.innerHTML = `Activities are ordered in non-decreasing order of finish times: <strong>${sortedActivities.map(a => `${a.id}(${a.finish})`).join(' &le; ')}</strong>. These values are passed to <strong>Step 2 & 3 Tracing</strong>.`;
+      }
+    }
+
+    function sortStep1Activities() {
+      computeSortedAndTracingData();
+      renderSortedTableData();
+      const sortedCard = document.getElementById('s3-sorted-card');
+      const sortBtn = document.getElementById('btn-s3-sort');
+      if (sortedCard) {
+        sortedCard.style.display = 'block';
+        s3SortedVisible = true;
+      }
+      if (sortBtn) {
+        sortBtn.innerHTML = '✓ Re-sort ▶';
+      }
+      const noteEl = document.getElementById('s3-info-note');
+      if (noteEl) {
+        noteEl.innerHTML = 'Activities sorted by finish time! See the sorted table below. Proceed to <strong>Slide 5</strong> to trace the algorithm.';
+      }
+    }
+
+    function stepSortingTable(delta) {
+      if (delta > 0) {
+        sortStep1Activities();
+      } else {
+        const sortedCard = document.getElementById('s3-sorted-card');
+        const sortBtn = document.getElementById('btn-s3-sort');
+        if (sortedCard) {
+          sortedCard.style.display = 'none';
+          s3SortedVisible = false;
+        }
+        if (sortBtn) {
+          sortBtn.innerHTML = 'Sort Activities ▶';
+        }
+        const noteEl = document.getElementById('s3-info-note');
+        if (noteEl) {
+          noteEl.innerHTML = 'You can edit the Start and Finish times in the table above. Click <strong>Sort Activities ▶</strong> to view the sorted activities table below.';
+        }
+      }
+    }
+
+    function resetStep1ToDefaults() {
+      currentActivities = JSON.parse(JSON.stringify(DEFAULT_ACTIVITIES));
+      populateStep1Inputs();
+      computeSortedAndTracingData();
+      const sortedCard = document.getElementById('s3-sorted-card');
+      const sortBtn = document.getElementById('btn-s3-sort');
+      if (sortedCard) {
+        sortedCard.style.display = 'none';
+        s3SortedVisible = false;
+      }
+      if (sortBtn) {
+        sortBtn.innerHTML = 'Sort Activities ▶';
+      }
+      const noteEl = document.getElementById('s3-info-note');
+      if (noteEl) {
+        noteEl.innerHTML = 'Values reset to default. Click <strong>Sort Activities ▶</strong> to view the sorted activities table below.';
+      }
+    }
+
+    // ================= COMPUTE SORTING & DYNAMIC SLIDE 5 TRACING =================
+    function computeSortedAndTracingData() {
+      // 1. Sort activities by finish time
+      sortedActivities = JSON.parse(JSON.stringify(currentActivities));
+      sortedActivities.sort((a, b) => {
+        if (a.finish !== b.finish) return a.finish - b.finish;
+        return a.start - b.start;
+      });
+
+      // 2. Compute Greedy Steps
+      traceData = [];
+      let lastFinish = 0;
+      let selectedActivities = [];
+      let selectedIndices = [];
+
+      for (let j = 0; j < sortedActivities.length; j++) {
+        const act = sortedActivities[j];
+        if (j === 0) {
+          lastFinish = act.finish;
+          selectedActivities.push(act.id);
+          selectedIndices.push(j);
+          traceData.push({
+            step: 0,
+            act: act.id,
+            start: act.start,
+            finish: act.finish,
+            check: "First activity",
+            decision: "select",
+            lastFinish: lastFinish,
+            note: `Step 0: ${act.id} selected as base activity with earliest finish time. last_finish = ${lastFinish}.`
+          });
+        } else {
+          const compatible = (act.start >= lastFinish);
+          if (compatible) {
+            lastFinish = act.finish;
+            selectedActivities.push(act.id);
+            selectedIndices.push(j);
+            traceData.push({
+              step: j,
+              act: act.id,
+              start: act.start,
+              finish: act.finish,
+              check: `${act.start} &ge; ${traceData[j-1].lastFinish}? Yes`,
+              decision: "select",
+              lastFinish: lastFinish,
+              note: `Step ${j}: ${act.id} start (${act.start}) &ge; last_finish (${traceData[j-1].lastFinish}) &rarr; Compatible! Select ${act.id}. last_finish = ${lastFinish}.`
+            });
+          } else {
+            traceData.push({
+              step: j,
+              act: act.id,
+              start: act.start,
+              finish: act.finish,
+              check: `${act.start} &ge; ${lastFinish}? No`,
+              decision: "skip",
+              lastFinish: lastFinish,
+              note: `Step ${j}: ${act.id} start (${act.start}) &lt; last_finish (${lastFinish}) &rarr; Overlaps! Skip ${act.id}. last_finish stays ${lastFinish}.`
+            });
+          }
+        }
+      }
+
+      traceMax = sortedActivities.length - 1;
+
+      // 3. Render Slide 5 Reference Bar
+      const sortedBar = document.getElementById('slide4-sorted-bar');
+      sortedBar.innerHTML = sortedActivities.map((a, idx) => `<span style="color: #67e8f9;">[${idx}] ${a.id}(${a.start},${a.finish})</span>`).join(' ');
+
+      // 4. Render Slide 5 Tracing Table Rows
+      const tableBody = document.getElementById('traceTableBodyDynamic');
+      tableBody.innerHTML = '';
+      for (let i = 0; i < traceData.length; i++) {
+        const d = traceData[i];
+        const tr = document.createElement('tr');
+        tr.id = `trow-${i}`;
+        tr.className = (i === 0) ? 'active-trace-row' : 'hidden-trace-row';
+        tr.onclick = () => jumpToTraceStep(i);
+
+        const badgeClass = (d.decision === 'select') ? 'badge-pill badge-select' : 'badge-pill badge-skip';
+        const badgeText = (d.decision === 'select') ? 'Select' : 'Skip';
+        const finishColor = (d.decision === 'select') ? 'var(--cyan)' : 'var(--text-muted)';
+
+        tr.innerHTML = `
+          <td style="font-weight: 800; color: var(--cyan);">${d.step}</td>
+          <td><strong style="color: #ffffff;">${d.act}</strong> (${d.start}, ${d.finish})</td>
+          <td>${d.check}</td>
+          <td><span class="${badgeClass}">${badgeText}</span></td>
+          <td><strong style="color: ${finishColor}; font-size: 0.98rem;">${d.lastFinish}</strong></td>
+        `;
+        tableBody.appendChild(tr);
+      }
+
+      // Summary text
+      document.getElementById('traceSummaryText').innerHTML = `
+        Total activities performed: <strong style="color: #ffffff;">${selectedActivities.join(', ')}: ${selectedActivities.length} Activities</strong> | Index: <code style="color: var(--cyan); font-weight: bold;">${selectedIndices.join(', ')}</code>
+      `;
+
+      // 5. Render Timeline
+      renderDynamicTimeline();
+
+      // Reset trace step
+      traceStep = 0;
+      syncTracingState(0);
+    }
+
+    function renderDynamicTimeline() {
+      const maxFinish = Math.max(...sortedActivities.map(a => a.finish), 10);
+      const maxTime = Math.max(10, Math.ceil(maxFinish + (maxFinish % 2 === 0 ? 1 : 2)));
+
+      // Render Time Axis
+      const timeAxis = document.getElementById('timelineTimeAxis');
+      timeAxis.innerHTML = '';
+      for (let t = 0; t <= maxTime; t++) {
+        const tick = document.createElement('div');
+        tick.className = 'axis-tick';
+        tick.innerHTML = `<span>${t}</span>`;
+        timeAxis.appendChild(tick);
+      }
+
+      // Render Grid Lines
+      const gridLines = document.getElementById('timelineGridLines');
+      gridLines.innerHTML = '';
+      for (let t = 0; t <= maxTime; t++) {
+        const gl = document.createElement('div');
+        gl.className = 'grid-line';
+        gl.style.left = `${(t / maxTime) * 100}%`;
+        gridLines.appendChild(gl);
+      }
+
+      // Render Activity Rows
+      const rowsContainer = document.getElementById('timelineActivityRows');
+      rowsContainer.innerHTML = '';
+      for (let i = 0; i < sortedActivities.length; i++) {
+        const act = sortedActivities[i];
+        const row = document.createElement('div');
+        row.className = 'plot-row';
+
+        const leftPct = (act.start / maxTime) * 100;
+        const widthPct = Math.max(1.5, ((act.finish - act.start) / maxTime) * 100);
+
+        row.innerHTML = `
+          <span class="plot-row-label">${act.id} (${act.start},${act.finish})</span>
+          <div class="plot-bar-track">
+            <div class="interval-bar bar-idle" id="bar-${act.id}" style="left: ${leftPct}%; width: ${widthPct}%;">
+              ${act.id} [${act.start}-${act.finish}]
+            </div>
+          </div>
+        `;
+        rowsContainer.appendChild(row);
+      }
+    }
+
+    // ================= SLIDE 5: TRACING TABLE CONTROLS =================
+    function stepTracingTable(delta) {
+      const newStep = Math.max(0, Math.min(traceMax, traceStep + delta));
+      syncTracingState(newStep);
+    }
+
+    function resetTracingTable() {
+      syncTracingState(0);
+    }
+
+    function jumpToTraceStep(stepIdx) {
+      syncTracingState(stepIdx);
+    }
+
+    function syncTracingState(stepIndex) {
+      traceStep = stepIndex;
+
+      // Update in-table controls
+      document.getElementById('trace-step-indicator').textContent = `Step ${stepIndex} / ${traceMax}`;
+      document.getElementById('btn-trace-prev').disabled = (traceStep === 0);
+      document.getElementById('btn-trace-next').disabled = (traceStep === traceMax);
+      document.getElementById('btn-trace-reset').disabled = (traceStep === 0);
+
+      // Table row visibility
+      for (let i = 0; i <= traceMax; i++) {
+        const row = document.getElementById(`trow-${i}`);
+        if (!row) continue;
+        if (i <= stepIndex) {
+          row.classList.remove('hidden-trace-row');
+          if (i === stepIndex) row.classList.add('active-trace-row');
+          else row.classList.remove('active-trace-row');
+        } else {
+          row.classList.add('hidden-trace-row');
+          row.classList.remove('active-trace-row');
+        }
+      }
+
+      // Synchronize Timeline Comparison
+      if (traceData.length > 0) {
+        const current = traceData[stepIndex];
+        document.getElementById('liveStatusExplanation').innerHTML = current.note;
+
+        const maxFinish = Math.max(...sortedActivities.map(a => a.finish), 10);
+        const maxTime = Math.max(10, Math.ceil(maxFinish + (maxFinish % 2 === 0 ? 1 : 2)));
+
+        const marker = document.getElementById('timelineMarker');
+        const timeRatio = current.lastFinish / maxTime;
+        marker.style.left = `calc(65px + (100% - 79px) * ${timeRatio})`;
+        marker.setAttribute('data-val', current.lastFinish);
+
+        // Interval Bars
+        for (let i = 0; i <= traceMax; i++) {
+          const item = traceData[i];
+          const bar = document.getElementById(`bar-${item.act}`);
+          if (!bar) continue;
+
+          if (i <= stepIndex) {
+            if (item.decision === 'select') {
+              bar.className = 'interval-bar bar-chosen';
+              bar.textContent = `${item.act} [${item.start}-${item.finish}] ✓`;
+            } else {
+              bar.className = 'interval-bar bar-rejected';
+              bar.textContent = `${item.act} [${item.start}-${item.finish}] ✕`;
+            }
+          } else {
+            bar.className = 'interval-bar bar-idle';
+            bar.textContent = `${item.act} [${item.start}-${item.finish}]`;
+          }
+        }
+
+        // Schedule pills
+        const tokenContainer = document.getElementById('liveSelectedTokens');
+        let tokenHtml = '';
+        for (let i = 0; i <= stepIndex; i++) {
+          if (traceData[i].decision === 'select') {
+            tokenHtml += `<span style="background: rgba(16, 185, 129, 0.25); color: var(--emerald-light); padding: 2px 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.4);">${traceData[i].act} [${traceData[i].start} &rarr; ${traceData[i].finish}]</span>`;
+          }
+        }
+        tokenContainer.innerHTML = tokenHtml;
+
+        // Completion Card
+        const compCard = document.getElementById('trace-completion-card');
+        if (stepIndex === traceMax) {
+          compCard.style.display = 'block';
+        } else {
+          compCard.style.display = 'none';
+        }
+      }
+    }
+
+    // Fullscreen Toggle
+    function togglePresentationFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Shortcuts
+    function setupKeyListeners() {
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (e.code === 'Space' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+          e.preventDefault();
+          proceedNextSlide();
+        }
+        else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          proceedPrevSlide();
+        }
+        // In-table stepping shortcuts
+        else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          if (activeSlideIndex === 1) stepExampleTable(1);
+          else if (activeSlideIndex === 3) stepSortingTable(1);
+          else if (activeSlideIndex === 4) stepTracingTable(1);
+        }
+        else if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
+          e.preventDefault();
+          if (activeSlideIndex === 1) stepExampleTable(-1);
+          else if (activeSlideIndex === 3) stepSortingTable(-1);
+          else if (activeSlideIndex === 4) stepTracingTable(-1);
+        }
+        else if (e.key.toLowerCase() === 'r') {
+          if (activeSlideIndex === 4) {
+            e.preventDefault();
+            resetTracingTable();
+          } else if (activeSlideIndex === 3) {
+            e.preventDefault();
+            resetStep1ToDefaults();
+          }
+        }
+        else if (e.key.toLowerCase() === 'f') {
+          togglePresentationFullscreen();
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initDeck();
+    });
+  </script>
+</body>
+</html>

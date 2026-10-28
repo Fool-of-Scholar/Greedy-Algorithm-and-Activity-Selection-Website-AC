@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Check: Greedy Algorithms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .glass-container {
+            background: rgba(30, 41, 59, 0.7); /* Slate 800 */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom radio button styling */
+        input[type="radio"] {
+            accent-color: #38bdf8; /* Sky 400 */
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
+        .feedback-box {
+            display: none;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .feedback-box.visible {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-container w-full max-w-3xl rounded-2xl p-6 md:p-10">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold mb-4">Knowledge Check</h1>
+            <div class="w-16 h-1 bg-sky-500 mx-auto rounded mb-4"></div>
+            <p class="text-slate-400 text-lg">Test your understanding of when and why Greedy Algorithms fail.</p>
+        </div>
+
+        <form id="quiz-form" class="space-y-10">
+            <!-- Question 1 -->
+            <div class="space-y-4" id="q1-container">
+                <h2 class="text-2xl font-semibold text-sky-400">1. Local vs Global Optimum</h2>
+                <p class="text-lg">Why do greedy algorithms sometimes fail to find the optimal solution?</p>
+                
+                <div class="space-y-3 bg-slate-900/50 p-5 rounded-lg border border-slate-700">
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q1" value="A" class="mt-1" required>
+                        <span><strong>A)</strong> They are too slow and generally run out of memory before finishing.</span>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q1" value="B" class="mt-1">
+                        <span><strong>B)</strong> They make locally optimal choices that permanently lock them out of the global optimum.</span>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q1" value="C" class="mt-1">
+                        <span><strong>C)</strong> They evaluate every single combination, which causes stack overflows.</span>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q1" value="D" class="mt-1">
+                        <span><strong>D)</strong> They always require overlapping subproblems to function correctly.</span>
+                    </label>
+                </div>
+                
+                <!-- Feedback Q1 -->
+                <div id="q1-feedback" class="feedback-box p-4 rounded-lg mt-2 border"></div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="space-y-4" id="q2-container">
+                <h2 class="text-2xl font-semibold text-sky-400">2. The 0/1 Knapsack Problem</h2>
+                <p class="text-lg">In the 0/1 Knapsack problem, why does the greedy approach (sorting by best value-to-weight ratio) fail?</p>
+                
+                <div class="space-y-3 bg-slate-900/50 p-5 rounded-lg border border-slate-700">
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q2" value="A" class="mt-1" required>
+                        <span><strong>A)</strong> It ignores the weight limit entirely and just takes the most valuable items.</span>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q2" value="B" class="mt-1">
+                        <span><strong>B)</strong> It takes fractions of items instead of whole items.</span>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q2" value="C" class="mt-1">
+                        <span><strong>C)</strong> It maximizes short-term ratio, potentially leaving empty space that a better combination of lower-ratio items could efficiently fill.</span>
+                    </label>
+                    <label class="flex items-start space-x-3 cursor-pointer p-2 hover:bg-slate-800 rounded transition-colors">
+                        <input type="radio" name="q2" value="D" class="mt-1">
+                        <span><strong>D)</strong> It stops early because it encounters an item with a negative value.</span>
+                    </label>
+                </div>
+
+                <!-- Feedback Q2 -->
+                <div id="q2-feedback" class="feedback-box p-4 rounded-lg mt-2 border"></div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-700 text-center">
+                <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-10 rounded-full transition-colors shadow-lg transform hover:scale-105 duration-200">
+                    Submit Answers
+                </button>
+            </div>
+            
+            <!-- Final Score Display -->
+            <div id="score-display" class="hidden text-center mt-6 text-2xl font-bold p-4 bg-slate-900 rounded-xl border border-slate-700">
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent page reload
+            
+            // Get selected values
+            const q1Answer = document.querySelector('input[name="q1"]:checked').value;
+            const q2Answer = document.querySelector('input[name="q2"]:checked').value;
+            
+            const q1Feedback = document.getElementById('q1-feedback');
+            const q2Feedback = document.getElementById('q2-feedback');
+            
+            let score = 0;
+
+            // Evaluate Question 1
+            if (q1Answer === 'B') {
+                score++;
+                q1Feedback.className = 'feedback-box visible bg-green-900/30 border-green-500 text-green-300 p-4 rounded-lg mt-2 border';
+                q1Feedback.innerHTML = '<strong>✓ Correct!</strong> Greedy algorithms make decisions based entirely on immediate, local gain. If the problem lacks the "greedy-choice property", this short-sightedness prevents it from seeing the true global optimum.';
+            } else {
+                q1Feedback.className = 'feedback-box visible bg-red-900/30 border-red-500 text-red-300 p-4 rounded-lg mt-2 border';
+                q1Feedback.innerHTML = '<strong>✗ Incorrect.</strong> The correct answer is <strong>B</strong>. Greedy algorithms are usually very fast and memory-efficient, but they fail when a short-sighted local choice prevents a better long-term combination.';
+            }
+
+            // Evaluate Question 2
+            if (q2Answer === 'C') {
+                score++;
+                q2Feedback.className = 'feedback-box visible bg-green-900/30 border-green-500 text-green-300 p-4 rounded-lg mt-2 border';
+                q2Feedback.innerHTML = '<strong>✓ Correct!</strong> In the 0/1 Knapsack problem, you cannot take fractions of items. Taking a highly-rated, heavy item might leave an awkward gap in your backpack that goes unused, whereas taking multiple slightly-lower-rated items might fill the backpack perfectly for a higher total value.';
+            } else {
+                q2Feedback.className = 'feedback-box visible bg-red-900/30 border-red-500 text-red-300 p-4 rounded-lg mt-2 border';
+                q2Feedback.innerHTML = '<strong>✗ Incorrect.</strong> The correct answer is <strong>C</strong>. The greedy approach focuses only on the value-to-weight ratio. Because it cannot break items into fractions, a high-ratio item might waste capacity that could have been perfectly filled by a combination of lower-ratio items.';
+            }
+
+            // Display Score
+            const scoreDisplay = document.getElementById('score-display');
+            scoreDisplay.classList.remove('hidden');
+            scoreDisplay.classList.add('block');
+            
+            if(score === 2) {
+                scoreDisplay.innerHTML = `Perfect Score: 2/2! <br><span class="text-sm text-sky-400 font-normal">You've mastered the pitfalls of Greedy Algorithms.</span>`;
+            } else {
+                scoreDisplay.innerHTML = `Your Score: ${score}/2 <br><span class="text-sm text-slate-400 font-normal">Review the explanations above to understand where greedy algorithms fall short.</span>`;
+            }
+
+            // Disable radio buttons after submission
+            const radios = document.querySelectorAll('input[type="radio"]');
+            radios.forEach(radio => radio.disabled = true);
+            
+            // Disable the submit button
+            const submitBtn = document.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.classList.remove('hover:bg-sky-500', 'hover:scale-105');
+            submitBtn.innerText = "Answers Submitted";
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDENTIFICATION CHALLENGE - EFT Strategy</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-radial: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0b0f19 70%);
+      --card-bg: rgba(23, 27, 44, 0.75);
+      --card-border: rgba(168, 85, 247, 0.2);
+      --accent-violet: #8b5cf6;
+      --accent-lavender: #c084fc;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --stage-bg: rgba(15, 23, 42, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-dark);
+      background-image: var(--bg-radial);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Main Container for Desktop (Single Screen View) */
+    .viewport-wrapper {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 2.2rem;
+      box-sizing: border-box;
+      gap: 1.25rem;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header Presentation Styling */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .eyebrow {
+      font-size: clamp(0.75rem, 1.1vw, 0.95rem);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent-lavender);
+    }
+
+    .title {
+      font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-lavender) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: var(--accent-violet);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .ctrl-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Content Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      flex: 1;
+      min-height: 0; /* Critical for flex child grid containment */
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      flex-shrink: 0;
+    }
+
+    .card-badge {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(139, 92, 246, 0.15) 100%);
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      color: var(--accent-lavender);
+      font-weight: 800;
+      font-size: clamp(0.7rem, 0.9vw, 0.85rem);
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card-type {
+      font-size: clamp(0.7rem, 0.9vw, 0.85rem);
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .question-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .question-text {
+      font-size: clamp(1.25rem, 2.1vw, 2.05rem);
+      line-height: 1.45;
+      font-weight: 500;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .blank-space {
+      display: inline-block;
+      min-width: 140px;
+      border-bottom: 3px dashed var(--accent-lavender);
+      color: var(--accent-lavender);
+      font-weight: 800;
+      text-align: center;
+      margin: 0 0.3rem;
+      padding: 0 0.4rem;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+    }
+
+    .card-footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-start;
+      flex-shrink: 0;
+    }
+
+    .instruction-tag {
+      font-size: clamp(0.7rem, 0.85vw, 0.8rem);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Dedicated Stage Area for Bouncing Shorts in Question 2 */
+    .shorts-stage {
+      width: 100%;
+      height: 150px;
+      margin-top: 1rem;
+      background: var(--stage-bg);
+      border: 1px dashed rgba(168, 85, 247, 0.25);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Outer sprite container handles translation only */
+    .shorts-sprite {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 70px;
+      height: 59.5px; /* Aspect ratio matches 100:85 viewBox perfectly */
+      will-change: transform;
+    }
+
+    /* Inner sprite wrapper handles pulse/scale animation without breaking outer position */
+    .shorts-inner {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 12px var(--accent-violet));
+      transition: filter 0.2s ease;
+      transform-origin: center center;
+    }
+
+    .shorts-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Collision Scale Pulse Keyframes on inner element */
+    @keyframes collidePulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+
+    .shorts-inner.collided {
+      animation: collidePulse 0.18s ease-out;
+    }
+
+    /* Responsive Mobile Layout */
+    @media (max-width: 900px) {
+      html, body {
+        overflow-y: auto;
+      }
+
+      .viewport-wrapper {
+        height: auto;
+        min-height: 100vh;
+        padding: 1.25rem 1rem;
+        overflow-y: visible;
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+      }
+
+      .card {
+        padding: 1.5rem;
+      }
+
+      .shorts-stage {
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="viewport-wrapper">
+  <!-- Header Presentation Controls -->
+  <header class="header">
+    <div class="header-titles">
+      <span class="eyebrow">Algorithms • Earliest-Finish-Time Strategy</span>
+      <h1 class="title">IDENTIFICATION CHALLENGE</h1>
+    </div>
+    <div class="controls-group">
+      <button id="play-pause-btn" class="ctrl-btn" title="Pause Animation (Space)">
+        <svg id="play-pause-icon" viewBox="0 0 24 24">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </button>
+      <button id="fullscreen-btn" class="ctrl-btn" title="Toggle Fullscreen (F)">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Cards Grid -->
+  <main class="cards-grid">
+    <!-- Question 1 Card -->
+    <section class="card">
+      <div class="card-header">
+        <span class="card-badge">Question 01</span>
+        <span class="card-type">Identification</span>
+      </div>
+      <div class="question-body">
+        <p class="question-text">
+          "This greedy algorithm strategy maximizes the total number of non-overlapping activities scheduled by always prioritizing tasks that finish soonest."
+        </p>
+      </div>
+      <div class="card-footer">
+        <span class="instruction-tag"></span>
+      </div>
+    </section>
+
+    <!-- Question 2 Card -->
+    <section class="card">
+      <div class="card-header">
+        <span class="card-badge">Question 02</span>
+        <span class="card-type">Fill in the Blank</span>
+      </div>
+      <div class="question-body">
+        <p class="question-text">
+          "Before evaluating activity compatibility, the EFT strategy must <span class="blank-space">________</span> all items by their finish time in ascending order."
+        </p>
+      </div>
+
+      <!-- Animation Bouncing Stage Area -->
+      <div class="shorts-stage" id="shorts-stage">
+        <div id="bouncing-shorts" class="shorts-sprite">
+          <div class="shorts-inner">
+            <svg class="shorts-svg" viewBox="0 0 100 85" xmlns="http://www.w3.org/2000/svg">
+              <!-- Waistband -->
+              <path class="shorts-part waistband" d="M 15 12 C 35 9, 65 9, 85 12 L 86 23 C 65 20, 35 20, 14 23 Z" fill="#e2e8f0" />
+              <!-- Drawstring lines -->
+              <path d="M 46 20 Q 43 32 40 40 M 54 20 Q 57 32 60 40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none" />
+              <!-- Shorts Body -->
+              <path class="shorts-part body" d="M 14 23 C 35 20, 65 20, 86 23 L 94 68 C 94 72, 90 75, 85 75 L 56 75 C 53 75, 51 72, 50 68 L 48 44 C 47 44, 45 44, 44 44 L 42 68 C 41 72, 39 75, 36 75 L 15 75 C 10 75, 6 72, 6 68 Z" fill="#c084fc" />
+              <!-- Sporty Side Stripes -->
+              <path d="M 17 25 L 8 68 M 83 25 L 92 68" stroke="rgba(255,255,255,0.6)" stroke-width="3.5" stroke-linecap="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  (function() {
+    const stage = document.getElementById('shorts-stage');
+    const sprite = document.getElementById('bouncing-shorts');
+    const innerSprite = sprite ? sprite.querySelector('.shorts-inner') : null;
+    const bodyPart = sprite ? sprite.querySelector('.shorts-part.body') : null;
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+    // Vibrant color palette for wall collisions
+    const colors = [
+      '#c084fc', // Lavender
+      '#38bdf8', // Sky blue
+      '#34d399', // Emerald
+      '#f472b6', // Pink
+      '#fbbf24', // Amber
+      '#a855f7', // Purple
+      '#f43f5e'  // Rose
+    ];
+
+    let posX = 20;
+    let posY = 20;
+    let speedX = 2.2;
+    let speedY = 1.8;
+    let colorIdx = 0;
+    let isPlaying = true;
+    let animFrameId = null;
+
+    // Check reduced motion accessibility preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      isPlaying = false;
+    }
+
+    function getBounds() {
+      const stageRect = stage.getBoundingClientRect();
+      const spriteWidth = 70;
+      const spriteHeight = 59.5;
+      return {
+        maxX: Math.max(0, stageRect.width - spriteWidth),
+        maxY: Math.max(0, stageRect.height - spriteHeight)
+      };
+    }
+
+    function triggerCollisionEffect() {
+      if (!innerSprite) return;
+      innerSprite.classList.remove('collided');
+      // Force reflow to re-trigger CSS keyframe pulse
+      void innerSprite.offsetWidth;
+      innerSprite.classList.add('collided');
+
+      // Change shorts body fill & glow shadow
+      colorIdx = (colorIdx + 1) % colors.length;
+      if (bodyPart) {
+        bodyPart.setAttribute('fill', colors[colorIdx]);
+      }
+      innerSprite.style.filter = `drop-shadow(0 0 16px ${colors[colorIdx]})`;
+    }
+
+    function step() {
+      if (!isPlaying) return;
+
+      const { maxX, maxY } = getBounds();
+
+      posX += speedX;
+      posY += speedY;
+
+      let bounced = false;
+
+      if (posX >= maxX) {
+        posX = maxX;
+        speedX = -Math.abs(speedX);
+        bounced = true;
+      } else if (posX <= 0) {
+        posX = 0;
+        speedX = Math.abs(speedX);
+        bounced = true;
+      }
+
+      if (posY >= maxY) {
+        posY = maxY;
+        speedY = -Math.abs(speedY);
+        bounced = true;
+      } else if (posY <= 0) {
+        posY = 0;
+        speedY = Math.abs(speedY);
+        bounced = true;
+      }
+
+      if (bounced) {
+        triggerCollisionEffect();
+      }
+
+      sprite.style.transform = `translate3d(${posX}px, ${posY}px, 0)`;
+
+      animFrameId = requestAnimationFrame(step);
+    }
+
+    function togglePlayPause() {
+      isPlaying = !isPlaying;
+      updatePlayPauseIcon();
+      if (isPlaying) {
+        animFrameId = requestAnimationFrame(step);
+      } else if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+      }
+    }
+
+    function updatePlayPauseIcon() {
+      if (!playPauseIcon) return;
+      if (isPlaying) {
+        playPauseIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+        playPauseBtn.setAttribute('title', 'Pause Animation (Space)');
+      } else {
+        playPauseIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+        playPauseBtn.setAttribute('title', 'Play Animation (Space)');
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Event listeners
+    if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+    if (fullscreenBtn) fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        togglePlayPause();
+      } else if (e.code === 'KeyF' || e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      const { maxX, maxY } = getBounds();
+      if (posX > maxX) posX = maxX;
+      if (posY > maxY) posY = maxY;
+      sprite.style.transform = `translate3d(${posX}px, ${posY}px, 0)`;
+    });
+
+    // Initial setup
+    updatePlayPauseIcon();
+    sprite.style.transform = `translate3d(${posX}px, ${posY}px, 0)`;
+    if (isPlaying) {
+      animFrameId = requestAnimationFrame(step);
+    }
+  })();
+</script>
+
+</body>
+</html>

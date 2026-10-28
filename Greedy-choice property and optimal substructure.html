@@ -1,0 +1,885 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Greedy-Choice Property and Optimal Substructure</title>
+
+<style>
+:root {
+    --bg: #F8F5FF;
+    --white: #FFFFFF;
+    --purple: #7C3AED;
+    --dark-purple: #5B21B6;
+    --light-purple: #EDE9FE;
+    --text: #281747;
+    --muted: #716582;
+    --border: #E5DDFB;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+.progress-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    z-index: 10;
+}
+
+.progress {
+    height: 100%;
+    width: 0;
+    background: var(--purple);
+    transition: width 0.3s ease;
+}
+
+.presentation {
+    min-height: 100vh;
+    padding: 55px 7% 115px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide {
+    display: none;
+    width: 100%;
+    max-width: 1100px;
+    animation: fadeIn 0.35s ease;
+}
+
+.slide.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.eyebrow {
+    color: var(--purple);
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: clamp(3rem, 7vw, 5.6rem);
+    line-height: 1.08;
+    letter-spacing: -2px;
+    margin-bottom: 25px;
+}
+
+h2 {
+    font-size: clamp(2.3rem, 5vw, 4rem);
+    line-height: 1.15;
+    margin-bottom: 25px;
+}
+
+h3 {
+    color: var(--dark-purple);
+    font-size: 1.5rem;
+    margin-bottom: 13px;
+}
+
+p, li {
+    font-size: clamp(1.1rem, 2vw, 1.35rem);
+    line-height: 1.7;
+}
+
+p {
+    margin-bottom: 17px;
+}
+
+ul {
+    padding-left: 25px;
+}
+
+li {
+    margin-bottom: 8px;
+}
+
+.highlight {
+    color: var(--purple);
+}
+
+.subtitle {
+    color: var(--muted);
+    font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+    max-width: 850px;
+}
+
+.question {
+    background: var(--light-purple);
+    border-left: 6px solid var(--purple);
+    border-radius: 0 18px 18px 0;
+    padding: 25px;
+    margin-top: 28px;
+    font-size: clamp(1.35rem, 2.7vw, 2rem);
+    line-height: 1.5;
+    font-weight: bold;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    margin-top: 25px;
+}
+
+.card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 27px;
+    box-shadow: 0 8px 25px #4C1D950A;
+}
+
+.card p:last-child {
+    margin-bottom: 0;
+}
+
+.tag {
+    display: inline-block;
+    padding: 8px 13px;
+    background: var(--light-purple);
+    color: var(--dark-purple);
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.steps {
+    display: grid;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.step {
+    display: grid;
+    grid-template-columns: 55px 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 17px;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    background: var(--light-purple);
+    color: var(--dark-purple);
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.step p {
+    margin: 0;
+}
+
+.diagram {
+    display: grid;
+    gap: 18px;
+    justify-items: center;
+    margin: 30px auto;
+}
+
+.diagram-box {
+    width: min(100%, 410px);
+    padding: 20px;
+    text-align: center;
+    border: 2px solid #C4B5FD;
+    border-radius: 16px;
+    background: var(--white);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.diagram-box.main {
+    background: var(--light-purple);
+    border-color: var(--purple);
+    color: var(--dark-purple);
+}
+
+.arrow {
+    color: var(--purple);
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.branch-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+.branch {
+    padding: 22px;
+    text-align: center;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+
+.branch strong {
+    color: var(--dark-purple);
+    font-size: 1.2rem;
+}
+
+.visual-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0;
+}
+
+.visual-item {
+    flex: 1 1 140px;
+    min-width: 0;
+    padding: 20px 12px;
+    background: var(--light-purple);
+    border: 1px solid #D8CCFC;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.visual-item strong {
+    display: block;
+    font-size: 1.6rem;
+    color: var(--dark-purple);
+    margin-bottom: 7px;
+}
+
+.visual-item span {
+    font-size: 1rem;
+    color: var(--muted);
+}
+
+.code {
+    padding: 24px;
+    margin-top: 20px;
+    overflow-x: auto;
+    background: #24183B;
+    color: #F5F0FF;
+    border-radius: 17px;
+    font: 1rem/1.8 Consolas, Monaco, monospace;
+    white-space: pre;
+}
+
+.result {
+    padding: 25px;
+    margin-top: 23px;
+    background: var(--light-purple);
+    border-radius: 18px;
+}
+
+.result strong {
+    color: var(--dark-purple);
+    font-size: 1.5rem;
+}
+
+.result p:last-child {
+    margin-bottom: 0;
+}
+
+.proof-label {
+    display: inline-block;
+    background: #F3E8FF;
+    color: var(--dark-purple);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.note {
+    color: var(--muted);
+    font-size: 1rem;
+    margin-top: 14px;
+}
+
+.controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 7%;
+    background: #FFFFFFF2;
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+}
+
+button {
+    border: none;
+    border-radius: 12px;
+    padding: 13px 23px;
+    background: var(--purple);
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: var(--dark-purple);
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#slideCount {
+    color: var(--muted);
+    font-weight: bold;
+}
+
+@media (max-width: 700px) {
+    .presentation {
+        align-items: flex-start;
+        padding: 40px 6% 105px;
+    }
+
+    .grid, .branch-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 22px;
+    }
+
+    .step {
+        grid-template-columns: 43px 1fr;
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+    }
+
+    .controls {
+        padding: 12px 5%;
+    }
+
+    button {
+        padding: 12px 15px;
+    }
+
+    .code {
+        font-size: 0.85rem;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="progress-track">
+    <div class="progress" id="progress"></div>
+</div>
+
+<main class="presentation">
+
+    <!-- SLIDE 1: INTRODUCTION -->
+    <section class="slide active">
+        <div class="eyebrow">01 / Introduction</div>
+
+        <h1>
+            Greedy-Choice Property
+            <span class="highlight">and</span>
+            Optimal Substructure
+        </h1>
+
+        <p class="subtitle">
+            Two important properties used to design and understand
+            efficient algorithms for optimization problems.
+        </p>
+
+        <div class="question">
+            How can we make a good decision now and still guarantee
+            the best possible overall solution?
+        </div>
+    </section>
+
+    <!-- SLIDE 2: CONTEXT -->
+    <section class="slide">
+        <div class="eyebrow">02 / Context</div>
+
+        <h2>Why Do These Properties <span class="highlight">Matter?</span></h2>
+
+        <p>
+            Optimization problems involve finding the best solution
+            while following certain rules or limitations.
+        </p>
+
+        <div class="grid">
+            <div class="card">
+                <span class="tag">Property 1</span>
+                <h3>Greedy-Choice Property</h3>
+                <p>
+                    A globally optimal solution can be reached by making
+                    a locally optimal choice at each step.
+                </p>
+            </div>
+
+            <div class="card">
+                <span class="tag">Property 2</span>
+                <h3>Optimal Substructure</h3>
+                <p>
+                    An optimal solution can be constructed from optimal
+                    solutions to smaller subproblems.
+                </p>
+            </div>
+        </div>
+
+        <div class="question">
+            The first property focuses on making a choice.
+            The second focuses on how smaller solutions form a larger one.
+        </div>
+    </section>
+
+    <!-- SLIDE 3: GREEDY-CHOICE EXAMPLE -->
+    <section class="slide">
+        <div class="eyebrow">03 / Example</div>
+
+        <h2>Greedy-Choice Property in <span class="highlight">Action</span></h2>
+
+        <p>
+            Consider a fractional knapsack problem. A bag can carry
+            25 kg, and we want to maximize the value of the items inside it.
+        </p>
+
+        <div class="card">
+            <h3>Available items</h3>
+
+            <div class="visual-list">
+                <div class="visual-item">
+                    <strong>Gold</strong>
+                    <span>10 kg · $60/kg</span>
+                </div>
+
+                <div class="visual-item">
+                    <strong>Silver</strong>
+                    <span>20 kg · $50/kg</span>
+                </div>
+
+                <div class="visual-item">
+                    <strong>Bronze</strong>
+                    <span>30 kg · $40/kg</span>
+                </div>
+            </div>
+
+            <p>
+                Greedy rule: Choose the available item with the highest
+                value per kilogram first.
+            </p>
+        </div>
+
+        <div class="result">
+            <h3>Greedy selection</h3>
+            <p>Take 10 kg of gold and then 15 kg of silver.</p>
+            <strong>$600 + $750 = $1,350</strong>
+            <p>All 25 kg of capacity is used.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: GREEDY METHOD -->
+    <section class="slide">
+        <div class="eyebrow">04 / Method</div>
+
+        <h2>How the Greedy-Choice Property <span class="highlight">Works</span></h2>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <p>
+                    <strong>Define the goal.</strong><br>
+                    Maximize the total value of items in the bag.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <p>
+                    <strong>Choose a local rule.</strong><br>
+                    Prefer the item with the highest value per kilogram.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <p>
+                    <strong>Make the best immediate choice.</strong><br>
+                    Take the available gold first because it has the highest value density.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <p>
+                    <strong>Continue with the remaining capacity.</strong><br>
+                    Take silver until the bag reaches 25 kg.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: GREEDY PROOF -->
+    <section class="slide">
+        <div class="eyebrow">05 / Evidence and Proof</div>
+
+        <h2>Why Does the Greedy Choice <span class="highlight">Work?</span></h2>
+
+        <div class="card">
+            <span class="proof-label">Exchange Argument</span>
+
+            <p>
+                In the fractional knapsack problem, suppose a solution
+                takes some lower-value-density material while a higher-value-density
+                item is still available.
+            </p>
+
+            <p>
+                We can replace a small amount of the lower-density material
+                with the same weight of the higher-density material.
+                This increases the total value without exceeding the bag's capacity.
+            </p>
+
+            <p>
+                Therefore, choosing the highest value per kilogram first
+                is safe for this problem.
+            </p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-box">
+                Highest value per kilogram
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <div class="diagram-box">
+                Replace lower-value material when possible
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <div class="diagram-box main">
+                No worse solution is needed
+            </div>
+        </div>
+
+        <p class="note">
+            This proof applies to the fractional knapsack problem.
+            The same greedy rule does not always work for 0/1 knapsack.
+        </p>
+    </section>
+
+    <!-- SLIDE 6: OPTIMAL SUBSTRUCTURE EXAMPLE -->
+    <section class="slide">
+        <div class="eyebrow">06 / Example</div>
+
+        <h2>Optimal Substructure in <span class="highlight">Action</span></h2>
+
+        <p>
+            Imagine finding the shortest route from Town A to Town C
+            through Town B.
+        </p>
+
+        <div class="diagram">
+            <div class="diagram-box main">Town A → Town C</div>
+
+            <div class="arrow">↓</div>
+
+            <div class="branch-grid">
+                <div class="branch">
+                    <strong>Subproblem 1</strong>
+                    <p>Find the shortest route from A to B.</p>
+                </div>
+
+                <div class="branch">
+                    <strong>Subproblem 2</strong>
+                    <p>Find the shortest route from B to C.</p>
+                </div>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <div class="diagram-box">
+                Combine both shortest routes
+            </div>
+        </div>
+
+        <div class="result">
+            <h3>Main idea</h3>
+            <p>
+                If the route from A to C through B is optimal, its A-to-B
+                and B-to-C portions must also be shortest paths for their
+                respective endpoints.
+            </p>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: OPTIMAL SUBSTRUCTURE METHOD -->
+    <section class="slide">
+        <div class="eyebrow">07 / Method</div>
+
+        <h2>How Optimal Substructure <span class="highlight">Works</span></h2>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <p>
+                    <strong>Identify the main problem.</strong><br>
+                    Find the shortest route from A to C.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <p>
+                    <strong>Break it into smaller problems.</strong><br>
+                    Find the shortest routes from A to B and from B to C.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <p>
+                    <strong>Solve the subproblems optimally.</strong><br>
+                    Find the best route for each smaller section.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <p>
+                    <strong>Combine the solutions.</strong><br>
+                    Join the shortest sections to form the full route.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: OPTIMAL SUBSTRUCTURE PROOF -->
+    <section class="slide">
+        <div class="eyebrow">08 / Evidence and Proof</div>
+
+        <h2>Why Is It <span class="highlight">Optimal Substructure?</span></h2>
+
+        <div class="card">
+            <span class="proof-label">Proof by Contradiction</span>
+
+            <p>
+                Assume the route from A to C is the shortest route through B,
+                but the section from A to B is not the shortest possible route.
+            </p>
+
+            <p>
+                Then a shorter route from A to B must exist. Replacing the
+                original section with that shorter route would make the
+                entire A-to-C route shorter.
+            </p>
+
+            <p>
+                This contradicts the assumption that the original route
+                was the shortest.
+            </p>
+
+            <p>
+                Therefore, an optimal solution must contain optimal
+                solutions to its subproblems.
+            </p>
+        </div>
+
+        <div class="question">
+            If a smaller part of an optimal solution could be improved,
+            then the whole solution could be improved too.
+        </div>
+    </section>
+
+    <!-- SLIDE 9: COMPARISON -->
+    <section class="slide">
+        <div class="eyebrow">09 / Comparison</div>
+
+        <h2>Greedy Choice vs. <span class="highlight">Optimal Substructure</span></h2>
+
+        <div class="grid">
+            <div class="card">
+                <span class="tag">Choosing</span>
+                <h3>Greedy-Choice Property</h3>
+                <p>
+                    Focuses on making the best immediate choice that can
+                    safely lead to an optimal overall solution.
+                </p>
+                <p><strong>Question:</strong> Which choice should we make now?</p>
+            </div>
+
+            <div class="card">
+                <span class="tag">Building</span>
+                <h3>Optimal Substructure</h3>
+                <p>
+                    Focuses on constructing an optimal solution from
+                    optimal solutions to smaller subproblems.
+                </p>
+                <p><strong>Question:</strong> How do smaller optimal solutions form the whole?</p>
+            </div>
+        </div>
+
+        <div class="result">
+            <h3>Remember</h3>
+            <p>
+                Greedy algorithms commonly rely on both properties.
+                Optimal substructure alone does not guarantee that a greedy
+                strategy will work; the greedy-choice property must also hold.
+            </p>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: CONCLUSION -->
+    <section class="slide">
+        <div class="eyebrow">10 / Conclusion</div>
+
+        <h2>Key <span class="highlight">Takeaways</span></h2>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <p>
+                    <strong>Greedy-choice property</strong><br>
+                    A suitable local choice can be part of a globally optimal solution.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <p>
+                    <strong>Optimal substructure</strong><br>
+                    An optimal solution can be built from optimal subproblem solutions.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <p>
+                    <strong>Proof matters</strong><br>
+                    Examples help explain an algorithm, but a proof establishes why it works.
+                </p>
+            </div>
+        </div>
+
+        <div class="question">
+            A good algorithm does not just find an answer.
+            It has a clear reason why that answer is correct.
+        </div>
+    </section>
+
+</main>
+
+<footer class="controls">
+    <button id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+    <span id="slideCount">1 / 10</span>
+    <button id="nextBtn" onclick="changeSlide(1)">Next →</button>
+</footer>
+
+<script>
+const slides = document.querySelectorAll(".slide");
+const progress = document.getElementById("progress");
+const slideCount = document.getElementById("slideCount");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+let currentSlide = 0;
+
+function showSlide(index) {
+    if (index < 0 || index >= slides.length) {
+        return;
+    }
+
+    slides[currentSlide].classList.remove("active");
+    currentSlide = index;
+    slides[currentSlide].classList.add("active");
+
+    slideCount.textContent =
+        (currentSlide + 1) + " / " + slides.length;
+
+    progress.style.width =
+        ((currentSlide + 1) / slides.length * 100) + "%";
+
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === slides.length - 1;
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+function changeSlide(direction) {
+    showSlide(currentSlide + direction);
+}
+
+document.addEventListener("keydown", function(event) {
+    if (event.key === "ArrowRight" || event.key === "PageDown") {
+        changeSlide(1);
+    }
+
+    if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        changeSlide(-1);
+    }
+
+    if (event.key === "Home") {
+        showSlide(0);
+    }
+
+    if (event.key === "End") {
+        showSlide(slides.length - 1);
+    }
+});
+
+showSlide(0);
+</script>
+
+</body>
+</html>
